@@ -1,0 +1,782 @@
+﻿<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-900 text-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Storage & Shared Calendar</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(51, 65, 85, 0.8);
+            border-radius: 4px;
+        }
+
+            ::-webkit-scrollbar-thumb:hover {
+                background: rgba(71, 85, 105, 1);
+            }
+    </style>
+</head>
+<body class="h-full flex flex-col overflow-hidden bg-slate-900 text-slate-100">
+
+    <header class="bg-slate-800/80 backdrop-blur-md border-b border-slate-700/60 sticky top-0 z-30 px-4 py-3 flex items-center justify-between shadow-lg">
+        <!-- Logo & Title -->
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white shadow-md shadow-cyan-500/20">
+                <i class="fa-solid fa-boxes-stacked text-xl"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-lg tracking-tight bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">SmartHub</h1>
+                <p class="text-xs text-slate-400 font-medium">Storage & Shared Calendar</p>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <nav class="hidden sm:flex items-center space-x-1 bg-slate-900/60 p-1 rounded-xl border border-slate-700/50">
+            <button id="nav-calendar-btn" onclick="switchTab('calendar')" class="px-4 py-2 text-sm font-medium rounded-lg transition-all flex items-center space-x-2 bg-brand-600 text-white shadow-sm">
+                <i class="fa-regular fa-calendar-days text-sm"></i>
+                <span>Calendar</span>
+            </button>
+            <button id="nav-storage-btn" onclick="switchTab('storage')" class="px-4 py-2 text-sm font-medium rounded-lg transition-all text-slate-400 hover:text-white flex items-center space-x-2">
+                <i class="fa-solid fa-box-archive text-sm"></i>
+                <span>Storage Manager</span>
+            </button>
+        </nav>
+
+        <!-- User Profile Header / Auth Control -->
+        <div class="flex items-center space-x-3">
+            <!-- Guest State View -->
+            <div id="guest-profile-container" class="flex items-center space-x-2">
+                <span class="hidden md:inline-block text-xs text-slate-400">Not signed in</span>
+                <button onclick="openAuthModal('signin')" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-slate-700 hover:bg-slate-600 text-white transition border border-slate-600/80 shadow-sm">
+                    Sign In
+                </button>
+                <button onclick="openAuthModal('signup')" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-brand-600 hover:bg-brand-500 text-white transition shadow-sm shadow-brand-500/20">
+                    Sign Up
+                </button>
+            </div>
+
+            <!-- Authenticated User View -->
+            <div id="user-profile-container" class="hidden items-center space-x-3">
+                <div class="flex items-center space-x-2.5 bg-slate-900/80 border border-slate-700/80 px-3 py-1.5 rounded-full">
+                    <div id="user-avatar" class="w-7 h-7 rounded-full bg-cyan-600 flex items-center justify-center font-semibold text-xs text-white uppercase shadow-inner">
+                        ?
+                    </div>
+                    <div class="flex flex-col text-left">
+                        <span id="user-display-name" class="text-xs font-semibold text-slate-200 leading-tight">Loading...</span>
+                        <span id="user-email-label" class="text-[10px] text-slate-400 leading-tight max-w-[100px] truncate">user@app.com</span>
+                    </div>
+                </div>
+
+                <button onclick="handleSignOut()" title="Sign Out" class="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 border border-slate-700 transition">
+                    <i class="fa-solid fa-right-from-bracket text-sm"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Mobile Nav Bottom Bar -->
+    <div class="sm:hidden bg-slate-800 border-b border-slate-700 px-4 py-2 flex justify-around">
+        <button id="mobile-nav-calendar" onclick="switchTab('calendar')" class="text-xs font-medium px-3 py-1.5 rounded-lg bg-brand-600 text-white flex items-center space-x-1.5">
+            <i class="fa-regular fa-calendar-days"></i>
+            <span>Calendar</span>
+        </button>
+        <button id="mobile-nav-storage" onclick="switchTab('storage')" class="text-xs font-medium px-3 py-1.5 rounded-lg text-slate-400 flex items-center space-x-1.5">
+            <i class="fa-solid fa-box-archive"></i>
+            <span>Storage</span>
+        </button>
+    </div>
+
+    <main class="flex-1 overflow-hidden relative p-4 md:p-6 max-w-7xl w-full mx-auto">
+
+        <!-- SECTION 1: SHARED CALENDAR -->
+        <section id="calendar-view" class="h-full flex flex-col space-y-4">
+            <!-- Calendar Header Toolbar -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-800/50 p-4 rounded-xl border border-slate-700/60">
+                <div class="flex items-center space-x-3">
+                    <h2 id="calendar-month-year" class="text-xl font-bold text-white tracking-wide">October 2026</h2>
+                    <div class="flex items-center space-x-1 bg-slate-900/80 rounded-lg border border-slate-700/80 p-0.5">
+                        <button onclick="navigateMonth(-1)" class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-800 text-slate-300 transition">
+                            <i class="fa-solid fa-chevron-left text-xs"></i>
+                        </button>
+                        <button onclick="navigateMonth(0)" class="px-2 py-1 text-xs font-medium text-slate-400 hover:text-white transition">
+                            Today
+                        </button>
+                        <button onclick="navigateMonth(1)" class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-800 text-slate-300 transition">
+                            <i class="fa-solid fa-chevron-right text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-3">
+                    <div class="text-xs text-slate-400 flex items-center space-x-2">
+                        <span class="inline-block w-2.5 h-2.5 rounded-full bg-cyan-500"></span>
+                        <span>Your Events</span>
+                        <span class="inline-block w-2.5 h-2.5 rounded-full bg-slate-600 ml-2"></span>
+                        <span>Shared/Guest Events</span>
+                    </div>
+                    <button onclick="openAddEventModal()" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold rounded-lg shadow-md transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Add Event</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Calendar Grid Body -->
+            <div class="flex-1 bg-slate-800/40 border border-slate-700/60 rounded-xl overflow-hidden flex flex-col">
+                <!-- Days Header -->
+                <div class="grid grid-cols-7 bg-slate-800 border-b border-slate-700/80 text-center py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                    <div>Sun</div>
+                    <div>Mon</div>
+                    <div>Tue</div>
+                    <div>Wed</div>
+                    <div>Thu</div>
+                    <div>Fri</div>
+                    <div>Sat</div>
+                </div>
+
+                <!-- Dynamic Days Grid -->
+                <div id="calendar-days-grid" class="flex-1 grid grid-cols-7 grid-rows-6 divide-x divide-y divide-slate-700/40 text-sm overflow-y-auto">
+                    <!-- Calendar Days Populated by JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: SMART STORAGE MANAGER -->
+        <section id="storage-view" class="h-full hidden flex-col space-y-4">
+            <!-- Storage Header & Controls -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-800/50 p-4 rounded-xl border border-slate-700/60">
+                <div>
+                    <h2 class="text-xl font-bold text-white tracking-wide">Smart Storage Manager</h2>
+                    <p class="text-xs text-slate-400">Organize and search items across locations</p>
+                </div>
+
+                <div class="flex items-center space-x-3">
+                    <!-- Search Box -->
+                    <div class="relative min-w-[200px]">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                        <input type="text" id="storage-search-input" oninput="renderStorageItems()" placeholder="Search items..." class="w-full bg-slate-900 border border-slate-700 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition">
+                    </div>
+
+                    <button onclick="openAddItemModal()" class="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold rounded-lg shadow-md transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Add Item</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Storage Items Table/Grid Container -->
+            <div class="flex-1 bg-slate-800/40 border border-slate-700/60 rounded-xl overflow-hidden flex flex-col p-4 space-y-4">
+                <!-- Location Filters -->
+                <div class="flex items-center space-x-2 overflow-x-auto pb-2 border-b border-slate-700/60" id="location-filter-pills">
+                    <!-- Rendered via JS -->
+                </div>
+
+                <!-- Items Table -->
+                <div class="flex-1 overflow-y-auto rounded-lg border border-slate-700/60">
+                    <table class="w-full text-left text-xs text-slate-300">
+                        <thead class="bg-slate-800 text-slate-400 uppercase font-semibold border-b border-slate-700">
+                            <tr>
+                                <th class="px-4 py-3">Item Name</th>
+                                <th class="px-4 py-3">Location</th>
+                                <th class="px-4 py-3">Category</th>
+                                <th class="px-4 py-3">Qty</th>
+                                <th class="px-4 py-3">Added By</th>
+                                <th class="px-4 py-3 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="storage-items-tbody" class="divide-y divide-slate-700/50">
+                            <!-- Rendered via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <div id="auth-modal" class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center hidden p-4">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-2xl relative transform transition-all">
+            <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white transition">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <!-- Modal Header -->
+            <div class="mb-6">
+                <h3 id="auth-modal-title" class="text-xl font-bold text-white">Sign In</h3>
+                <p id="auth-modal-subtitle" class="text-xs text-slate-400 mt-1">Access your shared calendar and smart storage items</p>
+            </div>
+
+            <!-- Auth Form -->
+            <form id="auth-form" onsubmit="handleAuthSubmit(event)" class="space-y-4">
+                <div id="name-field-container" class="hidden">
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Full Name</label>
+                    <input type="text" id="auth-name-input" placeholder="John Doe" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Email Address</label>
+                    <input type="email" id="auth-email-input" required placeholder="user@example.com" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Password</label>
+                    <input type="password" id="auth-password-input" required placeholder="••••••••" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-500">
+                </div>
+
+                <div id="auth-error-msg" class="text-xs text-rose-400 hidden bg-rose-500/10 border border-rose-500/20 p-2.5 rounded-lg">
+                    An error occurred.
+                </div>
+
+                <button type="submit" id="auth-submit-btn" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-2.5 px-4 rounded-lg text-xs shadow-md transition">
+                    Sign In
+                </button>
+            </form>
+
+            <!-- Toggle Mode Link -->
+            <div class="mt-4 text-center text-xs text-slate-400">
+                <span id="auth-toggle-text">Don't have an account?</span>
+                <button onclick="toggleAuthMode()" id="auth-toggle-btn" class="text-cyan-400 font-semibold hover:underline ml-1">
+                    Sign Up
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="event-modal" class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center hidden p-4">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+            <button onclick="closeEventModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white transition">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <h3 class="text-lg font-bold text-white mb-4">Add Calendar Event</h3>
+
+            <form onsubmit="handleCreateEvent(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Event Title</label>
+                    <input type="text" id="event-title-input" required placeholder="e.g. Storage Sorting / Team Sync" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Date</label>
+                    <input type="date" id="event-date-input" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Category</label>
+                    <select id="event-category-input" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-500">
+                        <option value="Personal">Personal</option>
+                        <option value="Storage">Storage Audit</option>
+                        <option value="Work">Work</option>
+                        <option value="Shared">Shared Task</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-2.5 px-4 rounded-lg text-xs shadow-md transition">
+                    Create Event
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="item-modal" class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center hidden p-4">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+            <button onclick="closeItemModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white transition">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <h3 class="text-lg font-bold text-white mb-4">Add Storage Item</h3>
+
+            <form onsubmit="handleCreateItem(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Item Name</label>
+                    <input type="text" id="item-name-input" required placeholder="e.g. Winter Jackets, HDMI Cables" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Location</label>
+                        <input type="text" id="item-location-input" required placeholder="Garage, Box #3" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Quantity</label>
+                        <input type="number" id="item-qty-input" required min="1" value="1" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Category</label>
+                    <input type="text" id="item-category-input" required placeholder="Clothing, Electronics, Tools" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-500">
+                </div>
+
+                <button type="submit" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-semibold py-2.5 px-4 rounded-lg text-xs shadow-md transition">
+                    Add Storage Item
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import {
+            getAuth,
+            signInAnonymously,
+            signInWithCustomToken,
+            createUserWithEmailAndPassword,
+            signInWithEmailAndPassword,
+            signOut,
+            onAuthStateChanged,
+            updateProfile
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import {
+            getFirestore,
+            collection,
+            doc,
+            addDoc,
+            onSnapshot,
+            deleteDoc
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'smart-hub-app';
+
+        // Updated with your actual Firebase project credentials
+        const firebaseConfig = {
+            apiKey: "AIzaSyBaHcWjIIoBy9e8gLeaOT_D5JkoL0Wc6EM",
+            authDomain: "calendarthing-d81f9.firebaseapp.com",
+            projectId: "calendarthing-d81f9",
+            storageBucket: "calendarthing-d81f9.firebasestorage.app",
+            messagingSenderId: "1059576668812",
+            appId: "1:1059576668812:web:86e81e362e54075ce491a9",
+            measurementId: "G-GWBTP04L38"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // App State
+        let currentUser = null;
+        let authMode = 'signin'; // 'signin' or 'signup'
+        let currentTab = 'calendar';
+        let currentDate = new Date(2026, 9, 1); // Oct 2026 default
+        let events = [];
+        let storageItems = [];
+        let selectedLocation = 'All';
+
+        // UI Exposing Functions
+        window.switchTab = switchTab;
+        window.openAuthModal = openAuthModal;
+        window.closeAuthModal = closeAuthModal;
+        window.toggleAuthMode = toggleAuthMode;
+        window.handleAuthSubmit = handleAuthSubmit;
+        window.handleSignOut = handleSignOut;
+        window.navigateMonth = navigateMonth;
+        window.openAddEventModal = openAddEventModal;
+        window.closeEventModal = closeEventModal;
+        window.handleCreateEvent = handleCreateEvent;
+        window.openAddItemModal = openAddItemModal;
+        window.closeItemModal = closeItemModal;
+        window.handleCreateItem = handleCreateItem;
+        window.deleteStorageItem = deleteStorageItem;
+
+        window.addEventListener('load', async () => {
+            // Authenticate initial user state
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                try {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } catch (e) {
+                    await signInAnonymously(auth);
+                }
+            }
+
+            onAuthStateChanged(auth, (user) => {
+                currentUser = user;
+                updateUserUI();
+                subscribeToFirestoreData();
+            });
+
+            renderCalendar();
+            renderStorageItems();
+        });
+
+        function openAuthModal(mode = 'signin') {
+            authMode = mode;
+            updateAuthModalUI();
+            document.getElementById('auth-modal').classList.remove('hidden');
+        }
+
+        function closeAuthModal() {
+            document.getElementById('auth-modal').classList.add('hidden');
+            document.getElementById('auth-error-msg').classList.add('hidden');
+        }
+
+        function toggleAuthMode() {
+            authMode = authMode === 'signin' ? 'signup' : 'signin';
+            updateAuthModalUI();
+        }
+
+        function updateAuthModalUI() {
+            const isSignUp = authMode === 'signup';
+            document.getElementById('auth-modal-title').innerText = isSignUp ? 'Create Account' : 'Sign In';
+            document.getElementById('auth-modal-subtitle').innerText = isSignUp ? 'Join SmartHub to collaborate on storage and calendars' : 'Welcome back! Sign in to access your dashboard';
+            document.getElementById('name-field-container').style.display = isSignUp ? 'block' : 'none';
+            document.getElementById('auth-submit-btn').innerText = isSignUp ? 'Sign Up' : 'Sign In';
+            document.getElementById('auth-toggle-text').innerText = isSignUp ? 'Already have an account?' : "Don't have an account?";
+            document.getElementById('auth-toggle-btn').innerText = isSignUp ? 'Sign In' : 'Sign Up';
+            document.getElementById('auth-error-msg').classList.add('hidden');
+        }
+
+        async function handleAuthSubmit(e) {
+            e.preventDefault();
+            const email = document.getElementById('auth-email-input').value;
+            const password = document.getElementById('auth-password-input').value;
+            const errorMsg = document.getElementById('auth-error-msg');
+            errorMsg.classList.add('hidden');
+
+            try {
+                if (authMode === 'signup') {
+                    const name = document.getElementById('auth-name-input').value || 'User';
+                    const cred = await createUserWithEmailAndPassword(auth, email, password);
+                    await updateProfile(cred.user, { displayName: name });
+                } else {
+                    await signInWithEmailAndPassword(auth, email, password);
+                }
+                closeAuthModal();
+            } catch (err) {
+                errorMsg.innerText = err.message || 'Authentication failed. Please try again.';
+                errorMsg.classList.remove('hidden');
+            }
+        }
+
+        async function handleSignOut() {
+            try {
+                await signOut(auth);
+                await signInAnonymously(auth); // Fallback to anonymous guest state
+            } catch (e) {
+                console.error("Sign out error", e);
+            }
+        }
+
+        function updateUserUI() {
+            const guestContainer = document.getElementById('guest-profile-container');
+            const userContainer = document.getElementById('user-profile-container');
+
+            if (currentUser && !currentUser.isAnonymous) {
+                guestContainer.classList.add('hidden');
+                guestContainer.classList.remove('flex');
+                userContainer.classList.remove('hidden');
+                userContainer.classList.add('flex');
+
+                const name = currentUser.displayName || currentUser.email?.split('@')[0] || 'Member';
+                document.getElementById('user-display-name').innerText = name;
+                document.getElementById('user-email-label').innerText = currentUser.email || 'Authenticated';
+                document.getElementById('user-avatar').innerText = name.charAt(0).toUpperCase();
+            } else {
+                userContainer.classList.add('hidden');
+                userContainer.classList.remove('flex');
+                guestContainer.classList.remove('hidden');
+                guestContainer.classList.add('flex');
+            }
+            renderCalendar();
+            renderStorageItems();
+        }
+
+        function subscribeToFirestoreData() {
+            if (!currentUser) return;
+
+            // Subscribe to Public Calendar Events
+            const eventsRef = collection(db, 'artifacts', appId, 'public', 'data', 'calendar_events');
+            onSnapshot(eventsRef, (snapshot) => {
+                events = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderCalendar();
+            }, (err) => console.error("Firestore events snapshot error:", err));
+
+            // Subscribe to Public Storage Items
+            const storageRef = collection(db, 'artifacts', appId, 'public', 'data', 'storage_items');
+            onSnapshot(storageRef, (snapshot) => {
+                storageItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderStorageItems();
+            }, (err) => console.error("Firestore storage snapshot error:", err));
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            const calBtn = document.getElementById('nav-calendar-btn');
+            const storeBtn = document.getElementById('nav-storage-btn');
+            const mCalBtn = document.getElementById('mobile-nav-calendar');
+            const mStoreBtn = document.getElementById('mobile-nav-storage');
+
+            const calView = document.getElementById('calendar-view');
+            const storeView = document.getElementById('storage-view');
+
+            if (tab === 'calendar') {
+                calView.classList.remove('hidden');
+                calView.classList.add('flex');
+                storeView.classList.add('hidden');
+                storeView.classList.remove('flex');
+
+                calBtn.className = "px-4 py-2 text-sm font-medium rounded-lg transition-all bg-brand-600 text-white shadow-sm flex items-center space-x-2";
+                storeBtn.className = "px-4 py-2 text-sm font-medium rounded-lg transition-all text-slate-400 hover:text-white flex items-center space-x-2";
+                mCalBtn.className = "text-xs font-medium px-3 py-1.5 rounded-lg bg-brand-600 text-white flex items-center space-x-1.5";
+                mStoreBtn.className = "text-xs font-medium px-3 py-1.5 rounded-lg text-slate-400 flex items-center space-x-1.5";
+            } else {
+                calView.classList.add('hidden');
+                calView.classList.remove('flex');
+                storeView.classList.remove('hidden');
+                storeView.classList.add('flex');
+
+                storeBtn.className = "px-4 py-2 text-sm font-medium rounded-lg transition-all bg-brand-600 text-white shadow-sm flex items-center space-x-2";
+                calBtn.className = "px-4 py-2 text-sm font-medium rounded-lg transition-all text-slate-400 hover:text-white flex items-center space-x-2";
+                mStoreBtn.className = "text-xs font-medium px-3 py-1.5 rounded-lg bg-brand-600 text-white flex items-center space-x-1.5";
+                mCalBtn.className = "text-xs font-medium px-3 py-1.5 rounded-lg text-slate-400 flex items-center space-x-1.5";
+            }
+        }
+
+        function navigateMonth(offset) {
+            if (offset === 0) {
+                currentDate = new Date();
+            } else {
+                currentDate.setMonth(currentDate.getMonth() + offset);
+            }
+            renderCalendar();
+        }
+
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            document.getElementById('calendar-month-year').innerText = `${monthNames[month]} ${year}`;
+
+            const grid = document.getElementById('calendar-days-grid');
+            grid.innerHTML = '';
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            // Render Empty Leading Cells
+            for (let i = 0; i < firstDay; i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.className = "bg-slate-900/30 p-1 min-h-[80px]";
+                grid.appendChild(emptyCell);
+            }
+
+            // Render Days
+            for (let day = 1; day <= daysInMonth; day++) {
+                const cell = document.createElement('div');
+                const formattedDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+                const isToday = new Date().toISOString().split('T')[0] === formattedDate;
+
+                cell.className = `p-2 min-h-[80px] flex flex-col justify-start relative transition hover:bg-slate-800/60 ${isToday ? 'bg-cyan-950/20 border border-cyan-500/30' : 'bg-slate-900/10'}`;
+
+                const dayHeader = document.createElement('div');
+                dayHeader.className = "flex justify-between items-center mb-1";
+                dayHeader.innerHTML = `<span class="text-xs font-semibold ${isToday ? 'text-cyan-400 font-bold' : 'text-slate-400'}">${day}</span>`;
+                cell.appendChild(dayHeader);
+
+                // Filter events for this day
+                const dayEvents = events.filter(e => e.date === formattedDate);
+                dayEvents.forEach(evt => {
+                    const evtBadge = document.createElement('div');
+                    const isMine = currentUser && evt.authorId === currentUser.uid;
+
+                    evtBadge.className = `text-[10px] p-1 mb-1 rounded truncate flex items-center justify-between ${isMine ? 'bg-cyan-600/30 border border-cyan-500/40 text-cyan-200' : 'bg-slate-700/60 border border-slate-600/40 text-slate-300'}`;
+                    evtBadge.innerHTML = `
+                    <span class="truncate" title="${evt.title} (${evt.authorName})">${evt.title}</span>
+                  `;
+                    cell.appendChild(evtBadge);
+                });
+
+                grid.appendChild(cell);
+            }
+        }
+
+        function openAddEventModal() {
+            document.getElementById('event-modal').classList.remove('hidden');
+        }
+        function closeEventModal() {
+            document.getElementById('event-modal').classList.add('hidden');
+        }
+
+        async function handleCreateEvent(e) {
+            e.preventDefault();
+            if (!currentUser) return;
+
+            const title = document.getElementById('event-title-input').value;
+            const date = document.getElementById('event-date-input').value;
+            const category = document.getElementById('event-category-input').value;
+
+            const newEvt = {
+                title,
+                date,
+                category,
+                authorId: currentUser.uid,
+                authorName: currentUser.displayName || currentUser.email?.split('@')[0] || 'Guest User',
+                createdAt: new Date().toISOString()
+            };
+
+            try {
+                const eventsRef = collection(db, 'artifacts', appId, 'public', 'data', 'calendar_events');
+                await addDoc(eventsRef, newEvt);
+                closeEventModal();
+                e.target.reset();
+            } catch (err) {
+                console.error("Error adding event:", err);
+            }
+        }
+
+        function renderStorageItems() {
+            const tbody = document.getElementById('storage-items-tbody');
+            const search = document.getElementById('storage-search-input')?.value.toLowerCase() || '';
+
+            // Extract unique locations for pills
+            const locations = ['All', ...new Set(storageItems.map(i => i.location))];
+            renderLocationPills(locations);
+
+            let filtered = storageItems.filter(item => {
+                const matchesLoc = selectedLocation === 'All' || item.location === selectedLocation;
+                const matchesSearch = item.name.toLowerCase().includes(search) ||
+                    item.category.toLowerCase().includes(search) ||
+                    item.location.toLowerCase().includes(search);
+                return matchesLoc && matchesSearch;
+            });
+
+            tbody.innerHTML = '';
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `
+                  <tr>
+                    <td colspan="6" class="text-center py-8 text-slate-500">
+                      No storage items found matching criteria.
+                    </td>
+                  </tr>
+                `;
+                return;
+            }
+
+            filtered.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-800/50 transition";
+                const isOwner = currentUser && item.addedById === currentUser.uid;
+
+                tr.innerHTML = `
+                  <td class="px-4 py-3 font-semibold text-slate-200">${item.name}</td>
+                  <td class="px-4 py-3"><span class="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300">${item.location}</span></td>
+                  <td class="px-4 py-3 text-slate-400">${item.category}</td>
+                  <td class="px-4 py-3 font-medium text-cyan-400">${item.qty}</td>
+                  <td class="px-4 py-3 text-slate-400">${item.addedByName}</td>
+                  <td class="px-4 py-3 text-right">
+                    ${isOwner ? `
+                      <button onclick="deleteStorageItem('${item.id}')" class="text-slate-500 hover:text-rose-400 p-1 transition">
+                        <i class="fa-solid fa-trash"></i>
+                      </button>
+                    ` : `<span class="text-[10px] text-slate-600">Read Only</span>`}
+                  </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderLocationPills(locations) {
+            const container = document.getElementById('location-filter-pills');
+            container.innerHTML = '';
+
+            locations.forEach(loc => {
+                const btn = document.createElement('button');
+                const isActive = selectedLocation === loc;
+                btn.className = `px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition ${isActive
+                    ? 'bg-brand-600 text-white shadow-sm'
+                    : 'bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-700/60'
+                    }`;
+                btn.innerText = loc;
+                btn.onclick = () => {
+                    selectedLocation = loc;
+                    renderStorageItems();
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        function openAddItemModal() {
+            document.getElementById('item-modal').classList.remove('hidden');
+        }
+        function closeItemModal() {
+            document.getElementById('item-modal').classList.add('hidden');
+        }
+
+        async function handleCreateItem(e) {
+            e.preventDefault();
+            if (!currentUser) return;
+
+            const name = document.getElementById('item-name-input').value;
+            const location = document.getElementById('item-location-input').value;
+            const qty = parseInt(document.getElementById('item-qty-input').value) || 1;
+            const category = document.getElementById('item-category-input').value;
+
+            const newItem = {
+                name,
+                location,
+                qty,
+                category,
+                addedById: currentUser.uid,
+                addedByName: currentUser.displayName || currentUser.email?.split('@')[0] || 'Guest User',
+                createdAt: new Date().toISOString()
+            };
+
+            try {
+                const storageRef = collection(db, 'artifacts', appId, 'public', 'data', 'storage_items');
+                await addDoc(storageRef, newItem);
+                closeItemModal();
+                e.target.reset();
+            } catch (err) {
+                console.error("Error adding storage item:", err);
+            }
+        }
+
+        async function deleteStorageItem(id) {
+            if (!currentUser) return;
+            try {
+                const itemRef = doc(db, 'artifacts', appId, 'public', 'data', 'storage_items', id);
+                await deleteDoc(itemRef);
+            } catch (err) {
+                console.error("Error deleting item:", err);
+            }
+        }
+    </script>
+</body>
+</html>
