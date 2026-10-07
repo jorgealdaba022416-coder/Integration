@@ -25,6 +25,28 @@
             }
         }
     </script>
+    <!-- Firebase App and Firestore SDKs (Compatibility Build) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <script>
+        // Your existing Firebase Config
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Initialize Firebase & Firestore database
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.firestore();
+    </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
@@ -50,6 +72,109 @@
                 background: rgba(71, 85, 105, 1);
             }
     </style>
+    <!-- Firebase App and Firestore SDKs (Compatibility Build) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <script>
+        // Your existing Firebase Config
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Initialize Firebase & Firestore database
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.firestore();
+        let chatUnsubscribe = null;
+
+        // Call this function when switching to the chat tab or when user signs in
+        function initChatListener() {
+            if (chatUnsubscribe) chatUnsubscribe(); // Stop previous listener if active
+
+            const chatContainer = document.getElementById('chat-messages');
+
+            // Subscribe to Firestore real-time updates (ordered chronologically)
+            chatUnsubscribe = db.collection('messages')
+                .orderBy('timestamp', 'asc')
+                .onSnapshot((snapshot) => {
+                    chatContainer.innerHTML = ''; // Clear container
+
+                    if (snapshot.empty) {
+                        chatContainer.innerHTML = '<div class="text-center text-xs text-slate-500 py-8">No messages yet. Start the conversation!</div>';
+                        return;
+                    }
+
+                    snapshot.forEach((doc) => {
+                        const msg = doc.data();
+                        const isMe = currentUser && msg.senderEmail === currentUser.email;
+
+                        // Render each message bubble
+                        chatContainer.innerHTML += `
+                    <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'}">
+                        <div class="text-[10px] text-slate-400 mb-1 px-1">
+                            ${isMe ? 'You' : (msg.senderName || msg.senderEmail)}
+                        </div>
+                        <div class="max-w-[75%] px-3.5 py-2 rounded-2xl text-xs ${isMe
+                                ? 'bg-cyan-600 text-white rounded-br-none'
+                                : 'bg-slate-700 text-slate-100 border border-slate-600 rounded-bl-none'
+                            }">
+                            ${escapeHtml(msg.text)}
+                        </div>
+                    </div>
+                `;
+                    });
+
+                    // Auto scroll to bottom on new message
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                }, (error) => {
+                    console.error("Chat listener error:", error);
+                });
+        }
+
+        // Handle sending messages
+        async function handleSendMessage(event) {
+            event.preventDefault();
+            const input = document.getElementById('chat-message-input');
+            const text = input.value.trim();
+
+            if (!text) return;
+
+            // Alert if user session is not found
+            if (!currentUser) {
+                alert("Please sign in first to send messages!");
+                return;
+            }
+
+            try {
+                await db.collection('messages').add({
+                    text: text,
+                    senderEmail: currentUser.email,
+                    senderName: currentUser.displayName || currentUser.email.split('@')[0],
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                input.value = ''; // Clear input
+            } catch (err) {
+                console.error("Failed to send message:", err);
+                alert("Error sending message. Check browser console for details.");
+            }
+        }
+
+        // Utility to escape HTML to prevent XSS injection
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.innerText = text;
+            return div.innerHTML;
+        }
+    </script>
 </head>
 <body class="h-full flex flex-col overflow-hidden bg-slate-900 text-slate-100">
 
@@ -67,14 +192,16 @@
 
         <!-- Navigation Tabs -->
         <nav class="hidden sm:flex items-center space-x-1 bg-slate-900/60 p-1 rounded-xl border border-slate-700/50">
-            <button id="nav-calendar-btn" onclick="switchTab('calendar')" class="px-4 py-2 text-sm font-medium rounded-lg transition-all flex items-center space-x-2 bg-brand-600 text-white shadow-sm">
+            <button type="button" id="nav-calendar-btn" onclick="switchTab('calendar-view')" class="px-4 py-2 text-sm font-medium rounded-lg transition-all flex items-center space-x-2 bg-brand-600 text-white shadow-sm">
                 <i class="fa-regular fa-calendar-days text-sm"></i>
                 <span>Calendar</span>
             </button>
-            <button id="nav-storage-btn" onclick="switchTab('storage')" class="px-4 py-2 text-sm font-medium rounded-lg transition-all text-slate-400 hover:text-white flex items-center space-x-2">
+
+            <button type="button" id="nav-storage-btn" onclick="switchTab('storage-view')" class="px-4 py-2 text-sm font-medium rounded-lg transition-all text-slate-400 hover:text-white flex items-center space-x-2">
                 <i class="fa-solid fa-box-archive text-sm"></i>
                 <span>Storage Manager</span>
             </button>
+
         </nav>
 
         <!-- User Profile Header / Auth Control -->
@@ -111,7 +238,7 @@
 
     <!-- Mobile Nav Bottom Bar -->
     <div class="sm:hidden bg-slate-800 border-b border-slate-700 px-4 py-2 flex justify-around">
-        <button id="mobile-nav-calendar" onclick="switchTab('calendar')" class="text-xs font-medium px-3 py-1.5 rounded-lg bg-brand-600 text-white flex items-center space-x-1.5">
+        <button id="mobile-nav-calendar" onclick="switchTab('calendar-view')" class="text-xs font-medium px-3 py-1.5 rounded-lg bg-brand-600 text-white flex items-center space-x-1.5">
             <i class="fa-regular fa-calendar-days"></i>
             <span>Calendar</span>
         </button>
@@ -209,14 +336,14 @@
                 <!-- Items Table -->
                 <div class="flex-1 overflow-y-auto rounded-lg border border-slate-700/60">
                     <table class="w-full text-left text-xs text-slate-300">
-                        <thead class="bg-slate-800 text-slate-400 uppercase font-semibold border-b border-slate-700">
+                        <thead>
                             <tr>
-                                <th class="px-4 py-3">Item Name</th>
-                                <th class="px-4 py-3">Location</th>
-                                <th class="px-4 py-3">Category</th>
-                                <th class="px-4 py-3">Qty</th>
-                                <th class="px-4 py-3">Added By</th>
-                                <th class="px-4 py-3 text-right">Actions</th>
+                                <th>FILE NAME</th>
+                                <th>TYPE</th>
+                                <th>SIZE</th>
+                                <th>UPLOADED BY</th>
+                                <th>DATE</th>
+                                <th>ACTIONS</th>
                             </tr>
                         </thead>
                         <tbody id="storage-items-tbody" class="divide-y divide-slate-700/50">
@@ -228,7 +355,18 @@
         </section>
 
     </main>
+    <!-- 1. Calendar View Section -->
+    <div id="view-calendar" class="tab-view">
+        <!-- Calendar content here -->
+    </div>
 
+    <!-- 2. Storage Manager View Section -->
+    <div id="view-storage" class="tab-view hidden">
+        <!-- Storage/File Table content here -->
+    </div>
+
+    <!-- 3. ADD THE CHAT UI CONTAINER HERE -->
+    
     <div id="auth-modal" class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center hidden p-4">
         <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-2xl relative transform transition-all">
             <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white transition">
@@ -319,32 +457,25 @@
                 <i class="fa-solid fa-xmark text-lg"></i>
             </button>
 
-            <h3 class="text-lg font-bold text-white mb-4">Add Storage Item</h3>
+            <h3 class="text-lg font-bold text-white mb-4">Upload File</h3>
 
             <form onsubmit="handleCreateItem(event)" class="space-y-4">
+                <!-- File Input -->
                 <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-1">Item Name</label>
-                    <input type="text" id="item-name-input" required placeholder="e.g. Winter Jackets, HDMI Cables" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-500">
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Select File</label>
+                    <input type="file" id="file-input" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-500 file:mr-3 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-cyan-600 file:text-white hover:file:bg-cyan-500 cursor-pointer">
                 </div>
 
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1">Location</label>
-                        <input type="text" id="item-location-input" required placeholder="Garage, Box #3" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-500">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1">Quantity</label>
-                        <input type="number" id="item-qty-input" required min="1" value="1" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-500">
-                    </div>
-                </div>
-
+                <!-- Category Field -->
                 <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-1">Category</label>
-                    <input type="text" id="item-category-input" required placeholder="Clothing, Electronics, Tools" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-500">
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Category / Folder</label>
+                    <input type="text" id="item-category-input" placeholder="Documents, Images, Project Files" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-500">
                 </div>
 
-                <button type="submit" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-semibold py-2.5 px-4 rounded-lg text-xs shadow-md transition">
-                    Add Storage Item
+                <!-- Submit Button -->
+                <button type="submit" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-semibold py-2.5 px-4 rounded-lg text-xs shadow-md transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    Upload File
                 </button>
             </form>
         </div>
@@ -398,6 +529,7 @@
         let selectedLocation = 'All';
 
         // UI Exposing Functions
+        window.deleteCalendarEvent = deleteCalendarEvent;
         window.switchTab = switchTab;
         window.openAuthModal = openAuthModal;
         window.closeAuthModal = closeAuthModal;
@@ -518,51 +650,62 @@
         function subscribeToFirestoreData() {
             if (!currentUser) return;
 
-            // Subscribe to Public Calendar Events
-            const eventsRef = collection(db, 'artifacts', appId, 'public', 'data', 'calendar_events');
+            // Subscribe to Calendar Events
+            const eventsRef = collection(db, 'calendar_events');
             onSnapshot(eventsRef, (snapshot) => {
                 events = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderCalendar();
             }, (err) => console.error("Firestore events snapshot error:", err));
 
-            // Subscribe to Public Storage Items
-            const storageRef = collection(db, 'artifacts', appId, 'public', 'data', 'storage_items');
+            // Subscribe to Storage Items (Matching handleCreateItem path)
+            const storageRef = collection(db, 'storage_items');
             onSnapshot(storageRef, (snapshot) => {
                 storageItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderStorageItems();
             }, (err) => console.error("Firestore storage snapshot error:", err));
         }
 
-        function switchTab(tab) {
-            currentTab = tab;
-            const calBtn = document.getElementById('nav-calendar-btn');
-            const storeBtn = document.getElementById('nav-storage-btn');
-            const mCalBtn = document.getElementById('mobile-nav-calendar');
-            const mStoreBtn = document.getElementById('mobile-nav-storage');
+        function switchTab(tabName) {
+            // Standardize tabName input (strip '-view' if passed)
+            const cleanTab = tabName.replace('-view', '');
 
-            const calView = document.getElementById('calendar-view');
-            const storeView = document.getElementById('storage-view');
+            // 1. Hide all main view sections and extra tab views
+            const sections = ['calendar-view', 'storage-view', 'view-chat'];
+            sections.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.classList.add('hidden');
+                    el.classList.remove('flex'); // Remove flex so 'hidden' works properly
+                }
+            });
 
-            if (tab === 'calendar') {
-                calView.classList.remove('hidden');
-                calView.classList.add('flex');
-                storeView.classList.add('hidden');
-                storeView.classList.remove('flex');
+            // 2. Show the active view section
+            let targetId = cleanTab === 'chat' ? 'view-chat' : `${cleanTab}-view`;
+            const activeView = document.getElementById(targetId);
+            if (activeView) {
+                activeView.classList.remove('hidden');
+                if (cleanTab !== 'chat') {
+                    activeView.classList.add('flex'); // Add flex back for section layout
+                }
+            }
 
-                calBtn.className = "px-4 py-2 text-sm font-medium rounded-lg transition-all bg-brand-600 text-white shadow-sm flex items-center space-x-2";
-                storeBtn.className = "px-4 py-2 text-sm font-medium rounded-lg transition-all text-slate-400 hover:text-white flex items-center space-x-2";
-                mCalBtn.className = "text-xs font-medium px-3 py-1.5 rounded-lg bg-brand-600 text-white flex items-center space-x-1.5";
-                mStoreBtn.className = "text-xs font-medium px-3 py-1.5 rounded-lg text-slate-400 flex items-center space-x-1.5";
-            } else {
-                calView.classList.add('hidden');
-                calView.classList.remove('flex');
-                storeView.classList.remove('hidden');
-                storeView.classList.add('flex');
+            // 3. Reset all nav button styles
+            const navButtons = document.querySelectorAll('nav button');
+            navButtons.forEach(btn => {
+                btn.classList.remove('bg-brand-600', 'bg-cyan-600', 'text-white', 'shadow-sm');
+                btn.classList.add('text-slate-400', 'hover:text-white');
+            });
 
-                storeBtn.className = "px-4 py-2 text-sm font-medium rounded-lg transition-all bg-brand-600 text-white shadow-sm flex items-center space-x-2";
-                calBtn.className = "px-4 py-2 text-sm font-medium rounded-lg transition-all text-slate-400 hover:text-white flex items-center space-x-2";
-                mStoreBtn.className = "text-xs font-medium px-3 py-1.5 rounded-lg bg-brand-600 text-white flex items-center space-x-1.5";
-                mCalBtn.className = "text-xs font-medium px-3 py-1.5 rounded-lg text-slate-400 flex items-center space-x-1.5";
+            // 4. Highlight the active nav button
+            const activeBtn = document.getElementById(`nav-${cleanTab}-btn`);
+            if (activeBtn) {
+                activeBtn.classList.remove('text-slate-400', 'hover:text-white');
+                activeBtn.classList.add('bg-brand-600', 'text-white', 'shadow-sm');
+            }
+
+            // 5. Connect chat listener if switching to chat
+            if (cleanTab === 'chat' && typeof initChatListener === 'function') {
+                initChatListener();
             }
         }
 
@@ -579,50 +722,86 @@
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
 
-            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-            document.getElementById('calendar-month-year').innerText = `${monthNames[month]} ${year}`;
+            const monthNames = [
+                "January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November", "December"
+            ];
+
+            const monthYearHeader = document.getElementById('calendar-month-year');
+            if (monthYearHeader) {
+                monthYearHeader.innerText = `${monthNames[month]} ${year}`;
+            }
 
             const grid = document.getElementById('calendar-days-grid');
+            if (!grid) return;
+
             grid.innerHTML = '';
 
             const firstDay = new Date(year, month, 1).getDay();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const todayStr = new Date().toISOString().split('T')[0];
 
-            // Render Empty Leading Cells
+            // 1. Render empty leading cells for days before the 1st
             for (let i = 0; i < firstDay; i++) {
                 const emptyCell = document.createElement('div');
                 emptyCell.className = "bg-slate-900/30 p-1 min-h-[80px]";
                 grid.appendChild(emptyCell);
             }
 
-            // Render Days
+            // 2. Render actual day cells with numbers and event badges
             for (let day = 1; day <= daysInMonth; day++) {
                 const cell = document.createElement('div');
                 const formattedDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const isToday = todayStr === formattedDate;
 
-                const isToday = new Date().toISOString().split('T')[0] === formattedDate;
+                cell.className = `p-2 min-h-[80px] flex flex-col justify-start relative transition hover:bg-slate-800/60 ${isToday ? 'bg-cyan-950/20 border border-cyan-500/30' : 'bg-slate-900/10'
+                    }`;
 
-                cell.className = `p-2 min-h-[80px] flex flex-col justify-start relative transition hover:bg-slate-800/60 ${isToday ? 'bg-cyan-950/20 border border-cyan-500/30' : 'bg-slate-900/10'}`;
-
+                // Header with day number
                 const dayHeader = document.createElement('div');
                 dayHeader.className = "flex justify-between items-center mb-1";
-                dayHeader.innerHTML = `<span class="text-xs font-semibold ${isToday ? 'text-cyan-400 font-bold' : 'text-slate-400'}">${day}</span>`;
+                dayHeader.innerHTML = `
+            <span class="text-xs font-semibold ${isToday ? 'text-cyan-400 font-bold' : 'text-slate-300'}">${day}</span>
+        `;
                 cell.appendChild(dayHeader);
 
+                // Container for events on this day
+                const eventsContainer = document.createElement('div');
+                eventsContainer.className = "space-y-1 overflow-y-auto max-h-[60px]";
+
                 // Filter events for this day
+                // Inside renderCalendar(), replace the dayEvents loop with this:
                 const dayEvents = events.filter(e => e.date === formattedDate);
                 dayEvents.forEach(evt => {
-                    const evtBadge = document.createElement('div');
-                    const isMine = currentUser && evt.authorId === currentUser.uid;
+                    const isMine = currentUser && evt.createdBy === currentUser.email;
+                    const badge = document.createElement('div');
+                    badge.className = `text-[10px] px-1.5 py-0.5 rounded flex items-center justify-between gap-1 group ${isMine ? 'bg-cyan-600 text-white' : 'bg-slate-700 text-slate-300'
+                        }`;
 
-                    evtBadge.className = `text-[10px] p-1 mb-1 rounded truncate flex items-center justify-between ${isMine ? 'bg-cyan-600/30 border border-cyan-500/40 text-cyan-200' : 'bg-slate-700/60 border border-slate-600/40 text-slate-300'}`;
-                    evtBadge.innerHTML = `
-                    <span class="truncate" title="${evt.title} (${evt.authorName})">${evt.title}</span>
-                  `;
-                    cell.appendChild(evtBadge);
+                    badge.innerHTML = `
+        <span class="truncate">${escapeHtml(evt.title)}</span>
+        <button onclick="deleteCalendarEvent('${evt.id}', event)" class="hover:text-rose-300 transition opacity-80 hover:opacity-100 p-0.5" title="Delete event">
+            <i class="fa-solid fa-xmark text-[10px]"></i>
+        </button>
+    `;
+                    eventsContainer.appendChild(badge);
                 });
 
+                cell.appendChild(eventsContainer);
                 grid.appendChild(cell);
+            }
+        }
+        async function deleteCalendarEvent(id, event) {
+            // Stop click event from propagating to parent elements
+            if (event) event.stopPropagation();
+
+            if (!confirm("Are you sure you want to delete this event?")) return;
+
+            try {
+                await deleteDoc(doc(db, 'calendar_events', id));
+            } catch (err) {
+                console.error("Error deleting event:", err);
+                alert(`Failed to delete event: ${err.message || err}`);
             }
         }
 
@@ -633,99 +812,112 @@
             document.getElementById('event-modal').classList.add('hidden');
         }
 
-        async function handleCreateEvent(e) {
-            e.preventDefault();
-            if (!currentUser) return;
+        async function handleCreateEvent(event) {
+            event.preventDefault();
 
-            const title = document.getElementById('event-title-input').value;
-            const date = document.getElementById('event-date-input').value;
-            const category = document.getElementById('event-category-input').value;
+            const titleInput = document.getElementById('event-title-input');
+            const dateInput = document.getElementById('event-date-input');
+            const categoryInput = document.getElementById('event-category-input');
 
-            const newEvt = {
-                title,
-                date,
-                category,
-                authorId: currentUser.uid,
-                authorName: currentUser.displayName || currentUser.email?.split('@')[0] || 'Guest User',
-                createdAt: new Date().toISOString()
-            };
+            if (!titleInput || !titleInput.value.trim() || !dateInput || !dateInput.value) {
+                alert("Please fill in both the title and date.");
+                return;
+            }
 
             try {
-                const eventsRef = collection(db, 'artifacts', appId, 'public', 'data', 'calendar_events');
-                await addDoc(eventsRef, newEvt);
+                const eventsRef = collection(db, 'calendar_events');
+                await addDoc(eventsRef, {
+                    title: titleInput.value.trim(),
+                    date: dateInput.value,
+                    category: categoryInput ? categoryInput.value : 'Personal',
+                    createdBy: (currentUser && !currentUser.isAnonymous) ? currentUser.email : 'Guest',
+                    createdAt: Date.now()
+                });
+
                 closeEventModal();
-                e.target.reset();
             } catch (err) {
-                console.error("Error adding event:", err);
+                console.error("Error creating calendar event:", err);
+                alert(`Failed to add event: ${err.message || err}`);
             }
         }
 
         function renderStorageItems() {
             const tbody = document.getElementById('storage-items-tbody');
-            const search = document.getElementById('storage-search-input')?.value.toLowerCase() || '';
+            if (!tbody) return;
 
-            // Extract unique locations for pills
-            const locations = ['All', ...new Set(storageItems.map(i => i.location))];
-            renderLocationPills(locations);
+            const search = document.getElementById('storage-search-input')?.value.toLowerCase().trim() || '';
 
-            let filtered = storageItems.filter(item => {
-                const matchesLoc = selectedLocation === 'All' || item.location === selectedLocation;
-                const matchesSearch = item.name.toLowerCase().includes(search) ||
-                    item.category.toLowerCase().includes(search) ||
-                    item.location.toLowerCase().includes(search);
-                return matchesLoc && matchesSearch;
+            // Extract unique categories for pills (replacing locations to match file metadata)
+            const categories = ['All', ...new Set(storageItems.map(i => i.category).filter(Boolean))];
+            renderCategoryPills(categories);
+
+            const filtered = storageItems.filter(item => {
+                const itemCat = item.category || 'General';
+                const matchesCategory = selectedLocation === 'All' || itemCat === selectedLocation;
+                const matchesSearch = (item.name || '').toLowerCase().includes(search) ||
+                    itemCat.toLowerCase().includes(search) ||
+                    (item.type || '').toLowerCase().includes(search) ||
+                    (item.uploadedBy || '').toLowerCase().includes(search);
+
+                return matchesCategory && matchesSearch;
             });
 
             tbody.innerHTML = '';
 
             if (filtered.length === 0) {
                 tbody.innerHTML = `
-                  <tr>
-                    <td colspan="6" class="text-center py-8 text-slate-500">
-                      No storage items found matching criteria.
-                    </td>
-                  </tr>
-                `;
+            <tr>
+                <td colspan="6" class="text-center py-8 text-xs text-slate-500">
+                    No storage items found matching criteria.
+                </td>
+            </tr>
+        `;
                 return;
             }
 
             filtered.forEach(item => {
                 const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-800/50 transition";
-                const isOwner = currentUser && item.addedById === currentUser.uid;
+                tr.className = "hover:bg-slate-800/50 transition border-b border-slate-700/40";
 
                 tr.innerHTML = `
-                  <td class="px-4 py-3 font-semibold text-slate-200">${item.name}</td>
-                  <td class="px-4 py-3"><span class="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300">${item.location}</span></td>
-                  <td class="px-4 py-3 text-slate-400">${item.category}</td>
-                  <td class="px-4 py-3 font-medium text-cyan-400">${item.qty}</td>
-                  <td class="px-4 py-3 text-slate-400">${item.addedByName}</td>
-                  <td class="px-4 py-3 text-right">
-                    ${isOwner ? `
-                      <button onclick="deleteStorageItem('${item.id}')" class="text-slate-500 hover:text-rose-400 p-1 transition">
-                        <i class="fa-solid fa-trash"></i>
-                      </button>
-                    ` : `<span class="text-[10px] text-slate-600">Read Only</span>`}
-                  </td>
-                `;
+            <td class="px-4 py-3 font-semibold text-slate-200 flex items-center gap-2">
+                <i class="fa-solid fa-file text-cyan-400"></i>
+                ${escapeHtml(item.name || 'Untitled')}
+            </td>
+            <td class="px-4 py-3">
+                <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-800 border border-slate-700 text-slate-300">
+                    ${escapeHtml(item.type || 'FILE')}
+                </span>
+            </td>
+            <td class="px-4 py-3 text-slate-400 text-xs">${escapeHtml(item.size || 'N/A')}</td>
+            <td class="px-4 py-3 text-slate-400 text-xs">${escapeHtml(item.uploadedBy || 'Guest')}</td>
+            <td class="px-4 py-3 text-slate-400 text-xs">${escapeHtml(item.date || '')}</td>
+            <td class="px-4 py-3 text-right">
+                <button onclick="deleteStorageItem('${item.id}')" class="text-slate-500 hover:text-rose-400 p-1 transition" title="Delete file">
+                    <i class="fa-solid fa-trash text-xs"></i>
+                </button>
+            </td>
+        `;
                 tbody.appendChild(tr);
             });
         }
 
-        function renderLocationPills(locations) {
+        function renderCategoryPills(categories) {
             const container = document.getElementById('location-filter-pills');
+            if (!container) return;
+
             container.innerHTML = '';
 
-            locations.forEach(loc => {
+            categories.forEach(cat => {
                 const btn = document.createElement('button');
-                const isActive = selectedLocation === loc;
+                const isActive = selectedLocation === cat;
                 btn.className = `px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition ${isActive
-                    ? 'bg-brand-600 text-white shadow-sm'
-                    : 'bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-700/60'
+                        ? 'bg-cyan-600 text-white shadow-sm'
+                        : 'bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-700/60'
                     }`;
-                btn.innerText = loc;
+                btn.innerText = cat;
                 btn.onclick = () => {
-                    selectedLocation = loc;
+                    selectedLocation = cat;
                     renderStorageItems();
                 };
                 container.appendChild(btn);
@@ -733,50 +925,78 @@
         }
 
         function openAddItemModal() {
-            document.getElementById('item-modal').classList.remove('hidden');
+            const modal = document.getElementById('item-modal');
+            if (modal) modal.classList.remove('hidden');
         }
+
         function closeItemModal() {
-            document.getElementById('item-modal').classList.add('hidden');
+            const modal = document.getElementById('item-modal');
+            if (modal) {
+                modal.classList.add('hidden');
+                const form = modal.querySelector('form');
+                if (form) form.reset();
+            }
         }
 
-        async function handleCreateItem(e) {
-            e.preventDefault();
-            if (!currentUser) return;
+        async function handleCreateItem(event) {
+            event.preventDefault();
 
-            const name = document.getElementById('item-name-input').value;
-            const location = document.getElementById('item-location-input').value;
-            const qty = parseInt(document.getElementById('item-qty-input').value) || 1;
-            const category = document.getElementById('item-category-input').value;
+            const fileInput = document.getElementById('file-input');
+            const categoryInput = document.getElementById('item-category-input');
+
+            if (!fileInput || !fileInput.files.length) {
+                alert("Please select a file to upload.");
+                return;
+            }
+
+            const file = fileInput.files[0];
+
+            const sizeInMB = (file.size / (1024 * 1024)).toFixed(2);
+            const fileSizeFormatted = sizeInMB > 0.01 ? `${sizeInMB} MB` : `${(file.size / 1024).toFixed(1)} KB`;
+            const today = new Date().toISOString().split('T')[0];
 
             const newItem = {
-                name,
-                location,
-                qty,
-                category,
-                addedById: currentUser.uid,
-                addedByName: currentUser.displayName || currentUser.email?.split('@')[0] || 'Guest User',
-                createdAt: new Date().toISOString()
+                name: file.name,
+                type: file.name.split('.').pop().toUpperCase(),
+                size: fileSizeFormatted,
+                uploadedBy: (currentUser && !currentUser.isAnonymous) ? (currentUser.displayName || currentUser.email) : 'Guest',
+                date: today,
+                category: categoryInput ? (categoryInput.value.trim() || 'General') : 'General',
+                createdAt: Date.now()
             };
 
             try {
-                const storageRef = collection(db, 'artifacts', appId, 'public', 'data', 'storage_items');
+                const storageRef = collection(db, 'storage_items');
                 await addDoc(storageRef, newItem);
                 closeItemModal();
-                e.target.reset();
             } catch (err) {
-                console.error("Error adding storage item:", err);
+                console.error("Firestore Upload Error Detail:", err);
+                alert(`Upload error: ${err.message || err}`);
             }
         }
 
         async function deleteStorageItem(id) {
-            if (!currentUser) return;
+            if (!confirm("Are you sure you want to delete this item?")) return;
             try {
-                const itemRef = doc(db, 'artifacts', appId, 'public', 'data', 'storage_items', id);
-                await deleteDoc(itemRef);
+                await deleteDoc(doc(db, 'storage_items', id));
             } catch (err) {
-                console.error("Error deleting item:", err);
+                console.error("Firestore Delete Error:", err);
+                alert(`Delete error: ${err.message || err}`);
             }
         }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.innerText = text;
+            return div.innerHTML;
+        }
+
+        // Ensure functions are exposed globally to window scope for onclick handlers
+        window.renderStorageItems = renderStorageItems;
+        window.openAddItemModal = openAddItemModal;
+        window.closeItemModal = closeItemModal;
+        window.handleCreateItem = handleCreateItem;
+        window.deleteStorageItem = deleteStorageItem;
     </script>
 </body>
 </html>
