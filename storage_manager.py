@@ -3,17 +3,18 @@ from fastapi.responses import HTMLResponse, FileResponse
 from pydantic import BaseModel
 import firebase_admin
 from firebase_admin import credentials, firestore
+from google.api_core.exceptions import RetryError, GoogleAPICallError
 import uvicorn
 import os
 
 app = FastAPI(title="Smart Storage & Calendar Portal")
 
-# Build absolute paths for files in the project folder
+# Build absolute paths
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SERVICE_KEY_PATH = os.path.join(BASE_DIR, "serviceAccountKey.json")
 INDEX_PATH = os.path.join(BASE_DIR, "index.html")
 
-# Initialize Firebase Admin SDK safely
+# Initialize Firebase Admin SDK
 if os.path.exists(SERVICE_KEY_PATH):
     if not firebase_admin._apps:
         cred = credentials.Certificate(SERVICE_KEY_PATH)
@@ -40,32 +41,54 @@ async def serve_ui():
         return FileResponse(INDEX_PATH)
     return HTMLResponse(content="<h1>index.html not found!</h1>", status_code=404)
 
-# Firebase Firestore Endpoints for Shared Calendar
+# Firebase Firestore Endpoints
 @app.get("/api/events")
 async def get_events():
     if not db:
-        return []
-    events_ref = db.collection("events").stream()
-    events = []
-    for doc in events_ref:
-        data = doc.to_dict()
-        data["id"] = doc.id
-        events.append(data)
-    return events
+        return {"status": "offline_mode", "events": []}
+    
+    try:
+        # Request with a strict 3-second timeout
+        events_ref = db.collection("events").timeout(3.0).stream()
+        events = []
+        for doc in events_ref:
+            data = doc.to_dict()
+            data["id"] = doc.id
+            events.append(data)
+        return {"status": "online", "events": events}
+    except Exception as e:
+        # If the network connection is down, fail safely and tell the frontend
+        print(f"Network error reading from Firebase: {e}")
+        return {"status": "offline_mode", "events": []}
 
 @app.post("/api/events")
 async def create_event(event: EventSchema):
     if not db:
         raise HTTPException(status_code=500, detail="Firebase not configured.")
-    update_time, doc_ref = db.collection("events").add(event.dict())
-    return {"id": doc_ref.id, "status": "Event saved to Firestore!"}
+    
+    try:
+        # Save to cloud with a quick timeout fallback
+        update_time, doc_ref = db.collection("events").add(event.dict())
+        return {"id": doc_ref.id, "status": "Event saved to Firestore!"}
+    except Exception as e:
+        print(f"Network error writing to Firebase: {e}")
+        # Return a special status code so frontend knows to save it locally
+        raise HTTPException(
+            status_code=503, 
+            detail="Database unreachable. Save this session payload locally in the browser outbox."
+        )
 
 @app.delete("/api/events/{event_id}")
 async def delete_event(event_id: str):
     if not db:
         raise HTTPException(status_code=500, detail="Firebase not configured.")
-    db.collection("events").document(event_id).delete()
-    return {"status": "Deleted successfully"}
+    
+    try:
+        db.collection("events").document(event_id).delete()
+        return {"status": "Deleted successfully"}
+    except Exception as e:
+        print(f"Network error deleting from Firebase: {e}")
+        raise HTTPException(status_code=503, detail="Database unreachable. Cannot delete while offline.")
 
 # File Upload Endpoint
 @app.post("/upload")

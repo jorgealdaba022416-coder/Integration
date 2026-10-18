@@ -611,72 +611,80 @@
     </div>
     <script type="module">
 
-                                import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-                                import {
-                                    getAuth,
-                                    signInAnonymously,
-                                    signInWithCustomToken,
-                                    createUserWithEmailAndPassword,
-                                    signInWithEmailAndPassword,
-                                    signOut,
-                                    onAuthStateChanged,
-                                    updateProfile,
-                                    deleteUser,
-                                    sendSignInLinkToEmail, // <-- ADD
-                                    isSignInWithEmailLink, // <-- ADD
-                                    signInWithEmailLink    // <-- ADD
-                                } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-                                import {
-                                    getFirestore,
-                                    collection,
-                                    doc,
-                                    addDoc,
-                                    onSnapshot,
-                                    deleteDoc
-                                } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import {
+            
+            getAuth,
+            signInAnonymously,
+            signInWithCustomToken,
+            createUserWithEmailAndPassword,
+            signInWithEmailAndPassword,
+            signOut,
+            onAuthStateChanged,
+            updateProfile,
+            deleteUser,
+            sendSignInLinkToEmail, 
+            isSignInWithEmailLink, 
+            signInWithEmailLink    
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import {
+            getFirestore,
+            initializeFirestore,
+            persistentLocalCache,
+            persistentMultipleTabManager,
+            collection,
+            doc,
+            addDoc,
+            onSnapshot,
+            deleteDoc
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-                                const appId = typeof __app_id !== 'undefined' ? __app_id : 'smart-hub-app';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'smart-hub-app';
 
-                                // Updated with your actual Firebase project credentials
-                                const firebaseConfig = {
-                                    apiKey: "AIzaSyBaHcWjIIoBy9e8gLeaOT_D5JkoL0Wc6EM",
-                                    authDomain: "calendarthing-d81f9.firebaseapp.com",
-                                    projectId: "calendarthing-d81f9",
-                                    storageBucket: "calendarthing-d81f9.firebasestorage.app",
-                                    messagingSenderId: "1059576668812",
-                                    appId: "1:1059576668812:web:86e81e362e54075ce491a9",
-                                    measurementId: "G-GWBTP04L38"
-                                };
+        // Updated with your actual Firebase project credentials
+        const firebaseConfig = {
+            apiKey: "AIzaSyBaHcWjIIoBy9e8gLeaOT_D5JkoL0Wc6EM",
+            authDomain: "calendarthing-d81f9.firebaseapp.com",
+            projectId: "calendarthing-d81f9",
+            storageBucket: "calendarthing-d81f9.firebasestorage.app",
+            messagingSenderId: "1059576668812",
+            appId: "1:1059576668812:web:86e81e362e54075ce491a9",
+            measurementId: "G-GWBTP04L38"
+        };
 
-                                const app = initializeApp(firebaseConfig);
-                                const auth = getAuth(app);
-                                const db = getFirestore(app);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = initializeFirestore(app, {
+            localCache: persistentLocalCache({
+                tabManager: persistentMultipleTabManager()
+            })
+        });
 
-                                // App State
-                                let currentUser = null;
-                                let authMode = 'signin'; // 'signin' or 'signup'
-                                let currentTab = 'calendar';
-                                let currentDate = new Date(2026, 9, 1); // Oct 2026 default
-                                let events = [];
-                                let storageItems = [];
-                                let selectedLocation = 'All';
+        // App State
+        let currentUser = null;
+        let authMode = 'signin'; // 'signin' or 'signup'
+        let currentTab = 'calendar';
+        let currentDate = new Date(2026, 9, 1); // Oct 2026 default
+        let events = [];
+        let storageItems = [];
+        let selectedLocation = 'All';
 
-                                // UI Exposing Functions
-                                window.deleteCalendarEvent = deleteCalendarEvent;
-                                window.switchTab = switchTab;
-                                window.openAuthModal = openAuthModal;
-                                window.closeAuthModal = closeAuthModal;
-                                window.toggleAuthMode = toggleAuthMode;
-                                window.handleAuthSubmit = handleAuthSubmit;
-                                window.handleSignOut = handleSignOut;
-                                window.navigateMonth = navigateMonth;
-                                window.openAddEventModal = openAddEventModal;
-                                window.closeEventModal = closeEventModal;
-                                window.handleCreateEvent = handleCreateEvent;
-                                window.openAddItemModal = openAddItemModal;
-                                window.closeItemModal = closeItemModal;
-                                window.handleCreateItem = handleCreateItem;
-                                window.deleteStorageItem = deleteStorageItem;
+        // UI Exposing Functions
+        window.deleteCalendarEvent = deleteCalendarEvent;
+        window.switchTab = switchTab;
+        window.openAuthModal = openAuthModal;
+        window.closeAuthModal = closeAuthModal;
+        window.toggleAuthMode = toggleAuthMode;
+        window.handleAuthSubmit = handleAuthSubmit;
+        window.handleSignOut = handleSignOut;
+        window.navigateMonth = navigateMonth;
+        window.openAddEventModal = openAddEventModal;
+        window.closeEventModal = closeEventModal;
+        window.handleCreateEvent = handleCreateEvent;
+        window.openAddItemModal = openAddItemModal;
+        window.closeItemModal = closeItemModal;
+        window.handleCreateItem = handleCreateItem;
+        window.deleteStorageItem = deleteStorageItem;
 
 window.addEventListener('load', async () => {
     // Authenticate initial user state
@@ -997,40 +1005,51 @@ function renderCalendar() {
         }
     }
 }
-                                async function deleteCalendarEvent(id, event) {
-                                    // Stop click event from propagating to parent elements
-                                    if (event) event.stopPropagation();
+async function deleteCalendarEvent(id, event) {
+    // Stop click event from propagating to parent elements
+    if (!navigator.onLine) {
+        alert("❌ Offline Error: You cannot delete calendar events while offline. Please reconnect to the internet and try again.");
+        return; // Stops the function immediately
+    }
+    if (event) event.stopPropagation();
 
-                                    if (!confirm("Are you sure you want to delete this event?")) return;
+    if (!confirm("Are you sure you want to delete this event?")) return;
 
-                                    try {
-                                        await deleteDoc(doc(db, 'calendar_events', id));
-                                    } catch (err) {
-                                        console.error("Error deleting event:", err);
-                                        alert(`Failed to delete event: ${err.message || err}`);
-                                    }
-                                }
+    try {
+        await deleteDoc(doc(db, 'calendar_events', id));
+    } catch (err) {
+        console.error("Error deleting event:", err);
+        alert(`Failed to delete event: ${err.message || err}`);
+    }
+}
 
-                                function openAddEventModal() {
-                                    document.getElementById('event-modal').classList.remove('hidden');
-                                }
-                                function closeEventModal() {
-                                    document.getElementById('event-modal').classList.add('hidden');
-                                }
+function openAddEventModal() {
+    document.getElementById('event-modal').classList.remove('hidden');
+}
+function closeEventModal() {
+    document.getElementById('event-modal').classList.add('hidden');
+}                                
 
 async function handleCreateEvent(event) {
-    event.preventDefault();
+    if (event && event.preventDefault) event.preventDefault();
+
+    // 🔒 OFFLINE GUARD CLAUSE
+    if (!navigator.onLine) {
+        alert("❌ Offline Error: You cannot create new calendar events while offline. Please reconnect to the internet and try again.");
+        return; // Stops the function from running and hitting Firebase
+    }
 
     const titleInput = document.getElementById('event-title-input');
     const dateInput = document.getElementById('event-date-input');
     const categoryInput = document.getElementById('event-category-input');
-    const descriptionInput = document.getElementById('event-description-input'); // <-- ADDED
+    const descriptionInput = document.getElementById('event-description-input');
     const deletersInput = document.getElementById('event-deleters-input');
 
     if (!titleInput || !titleInput.value.trim() || !dateInput || !dateInput.value) {
         alert("Please fill in both the title and date.");
         return;
     }
+
 
     const deleters = deletersInput && deletersInput.value.trim()
         ? deletersInput.value.split(',').map(email => email.trim()).filter(Boolean)
@@ -1042,7 +1061,7 @@ async function handleCreateEvent(event) {
             title: titleInput.value.trim(),
             date: dateInput.value,
             category: categoryInput ? categoryInput.value : 'Personal',
-            description: descriptionInput ? descriptionInput.value.trim() : '', // <-- ADDED
+            description: descriptionInput ? descriptionInput.value.trim() : '', 
             createdBy: (currentUser && !currentUser.isAnonymous) ? currentUser.email : 'Guest',
             deleters: deleters,
             createdAt: Date.now()
@@ -1055,107 +1074,107 @@ async function handleCreateEvent(event) {
     }
 }
 
-                                function renderStorageItems() {
-                                    const tbody = document.getElementById('storage-items-tbody');
-                                    if (!tbody) return;
+function renderStorageItems() {
+    const tbody = document.getElementById('storage-items-tbody');
+    if (!tbody) return;
 
-                                    const search = document.getElementById('storage-search-input')?.value.toLowerCase().trim() || '';
+    const search = document.getElementById('storage-search-input')?.value.toLowerCase().trim() || '';
 
-                                    // Extract unique categories for pills (replacing locations to match file metadata)
-                                    const categories = ['All', ...new Set(storageItems.map(i => i.category).filter(Boolean))];
-                                    renderCategoryPills(categories);
+    // Extract unique categories for pills (replacing locations to match file metadata)
+    const categories = ['All', ...new Set(storageItems.map(i => i.category).filter(Boolean))];
+    renderCategoryPills(categories);
 
-                                    const filtered = storageItems.filter(item => {
-                                        const itemCat = item.category || 'General';
-                                        const matchesCategory = selectedLocation === 'All' || itemCat === selectedLocation;
-                                        const matchesSearch = (item.name || '').toLowerCase().includes(search) ||
-                                            itemCat.toLowerCase().includes(search) ||
-                                            (item.type || '').toLowerCase().includes(search) ||
-                                            (item.uploadedBy || '').toLowerCase().includes(search);
+    const filtered = storageItems.filter(item => {
+        const itemCat = item.category || 'General';
+        const matchesCategory = selectedLocation === 'All' || itemCat === selectedLocation;
+        const matchesSearch = (item.name || '').toLowerCase().includes(search) ||
+            itemCat.toLowerCase().includes(search) ||
+            (item.type || '').toLowerCase().includes(search) ||
+            (item.uploadedBy || '').toLowerCase().includes(search);
 
-                                        return matchesCategory && matchesSearch;
-                                    });
+        return matchesCategory && matchesSearch;
+    });
 
-                                    tbody.innerHTML = '';
+    tbody.innerHTML = '';
 
-                                    if (filtered.length === 0) {
-                                        tbody.innerHTML = `
-                                    <tr>
-                                        <td colspan="6" class="text-center py-8 text-xs text-slate-500">
-                                            No storage items found matching criteria.
-                                        </td>
-                                    </tr>
-                                `;
-                                        return;
-                                    }
+    if (filtered.length === 0) {
+        tbody.innerHTML = `
+    <tr>
+        <td colspan="6" class="text-center py-8 text-xs text-slate-500">
+            No storage items found matching criteria.
+        </td>
+    </tr>
+`;
+        return;
+    }
 
-                                    filtered.forEach(item => {
-                                        const tr = document.createElement('tr');
-                                        tr.className = "hover:bg-slate-800/50 transition border-b border-slate-700/40";
+    filtered.forEach(item => {
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-800/50 transition border-b border-slate-700/40";
 
-                                        tr.innerHTML = `
-                                    <td class="px-4 py-3 font-semibold text-slate-200 flex items-center gap-2">
-                                        <i class="fa-solid fa-file text-cyan-400"></i>
-                                        ${escapeHtml(item.name || 'Untitled')}
-                                    </td>
-                                    <td class="px-4 py-3">
-                                        <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-800 border border-slate-700 text-slate-300">
-                                            ${escapeHtml(item.type || 'FILE')}
-                                        </span>
-                                    </td>
-                                    <td class="px-4 py-3 text-slate-400 text-xs">${escapeHtml(item.size || 'N/A')}</td>
-                                    <td class="px-4 py-3 text-slate-400 text-xs">${escapeHtml(item.uploadedBy || 'Guest')}</td>
-                                    <td class="px-4 py-3 text-slate-400 text-xs">${escapeHtml(item.date || '')}</td>
-                                    <td class="px-4 py-3 text-right flex items-center justify-end gap-2">
-                                        ${item.dataUrl ? `
-                                            <a href="${item.dataUrl}" download="${item.name}" class="text-slate-400 hover:text-cyan-400 p-1 transition" title="Download file">
-                                                <i class="fa-solid fa-download text-xs"></i>
-                                            </a>
-                                        ` : ''}
-                                        <button onclick="deleteStorageItem('${item.id}')" class="text-slate-500 hover:text-rose-400 p-1 transition" title="Delete file">
-                                            <i class="fa-solid fa-trash text-xs"></i>
-                                        </button>
-                                    </td>
-                                `;
-                                        tbody.appendChild(tr);
-                                    });
-                                }
+        tr.innerHTML = `
+    <td class="px-4 py-3 font-semibold text-slate-200 flex items-center gap-2">
+        <i class="fa-solid fa-file text-cyan-400"></i>
+        ${escapeHtml(item.name || 'Untitled')}
+    </td>
+    <td class="px-4 py-3">
+        <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-800 border border-slate-700 text-slate-300">
+            ${escapeHtml(item.type || 'FILE')}
+        </span>
+    </td>
+    <td class="px-4 py-3 text-slate-400 text-xs">${escapeHtml(item.size || 'N/A')}</td>
+    <td class="px-4 py-3 text-slate-400 text-xs">${escapeHtml(item.uploadedBy || 'Guest')}</td>
+    <td class="px-4 py-3 text-slate-400 text-xs">${escapeHtml(item.date || '')}</td>
+    <td class="px-4 py-3 text-right flex items-center justify-end gap-2">
+        ${item.dataUrl ? `
+            <a href="${item.dataUrl}" download="${item.name}" class="text-slate-400 hover:text-cyan-400 p-1 transition" title="Download file">
+                <i class="fa-solid fa-download text-xs"></i>
+            </a>
+        ` : ''}
+        <button onclick="deleteStorageItem('${item.id}')" class="text-slate-500 hover:text-rose-400 p-1 transition" title="Delete file">
+            <i class="fa-solid fa-trash text-xs"></i>
+        </button>
+    </td>
+`;
+        tbody.appendChild(tr);
+    });
+}
 
-                                function renderCategoryPills(categories) {
-                                    const container = document.getElementById('location-filter-pills');
-                                    if (!container) return;
+function renderCategoryPills(categories) {
+    const container = document.getElementById('location-filter-pills');
+    if (!container) return;
 
-                                    container.innerHTML = '';
+    container.innerHTML = '';
 
-                                    categories.forEach(cat => {
-                                        const btn = document.createElement('button');
-                                        const isActive = selectedLocation === cat;
-                                        btn.className = `px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition ${isActive
-                                                ? 'bg-cyan-600 text-white shadow-sm'
-                                                : 'bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-700/60'
-                                            }`;
-                                        btn.innerText = cat;
-                                        btn.onclick = () => {
-                                            selectedLocation = cat;
-                                            renderStorageItems();
-                                        };
-                                        container.appendChild(btn);
-                                    });
-                                }
+    categories.forEach(cat => {
+        const btn = document.createElement('button');
+        const isActive = selectedLocation === cat;
+        btn.className = `px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition ${isActive
+                ? 'bg-cyan-600 text-white shadow-sm'
+                : 'bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-700/60'
+            }`;
+        btn.innerText = cat;
+        btn.onclick = () => {
+            selectedLocation = cat;
+            renderStorageItems();
+        };
+        container.appendChild(btn);
+    });
+}
 
-                                function openAddItemModal() {
-                                    const modal = document.getElementById('item-modal');
-                                    if (modal) modal.classList.remove('hidden');
-                                }
+function openAddItemModal() {
+    const modal = document.getElementById('item-modal');
+    if (modal) modal.classList.remove('hidden');
+}
 
-                                function closeItemModal() {
-                                    const modal = document.getElementById('item-modal');
-                                    if (modal) {
-                                        modal.classList.add('hidden');
-                                        const form = modal.querySelector('form');
-                                        if (form) form.reset();
-                                    }
-                                }
+function closeItemModal() {
+    const modal = document.getElementById('item-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        const form = modal.querySelector('form');
+        if (form) form.reset();
+    }
+}                                
 
         async function handleCreateItem(event) {
             event.preventDefault();
@@ -1201,37 +1220,41 @@ async function handleCreateEvent(event) {
             reader.readAsDataURL(file);
         }
 
-                                async function deleteStorageItem(id) {
-                                    if (!confirm("Are you sure you want to delete this item?")) return;
-                                    try {
-                                        await deleteDoc(doc(db, 'storage_items', id));
-                                    } catch (err) {
-                                        console.error("Firestore Delete Error:", err);
-                                        alert(`Delete error: ${err.message || err}`);
-                                    }
-                                }
+        async function deleteStorageItem(id) {
+            if (!confirm("Are you sure you want to delete this item?")) return;
+            try {
+                await deleteDoc(doc(db, 'storage_items', id));
+            } catch (err) {
+                console.error("Firestore Delete Error:", err);
+                alert(`Delete error: ${err.message || err}`);
+            }
+        }
 
-                                function escapeHtml(text) {
-                                    const div = document.createElement('div');
-                                    div.innerText = text;
-                                    return div.innerHTML;
-}
-async function handleDeleteAccount() {
-                            if (!confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
-                                return;
-                            }
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.innerText = text;
+            return div.innerHTML;
+        }
 
-                            try {
-                                const user = auth.currentUser;
-                                if (user) {
-                                    await deleteUser(user);
-                                    alert("Account deleted successfully.");
-                                }
-                            } catch (err) {
-                                console.error("Error deleting account:", err);
-                                alert(`Failed to delete account: ${err.message}. (Note: Firebase requires a recent sign-in for security. If this occurs, try signing out and signing back in before deleting).`);
-                            }
-}
+
+        async function handleDeleteAccount() {
+            if (!confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
+                return;
+            }
+
+            try {
+                const user = auth.currentUser;
+                if (user) {
+                    await deleteUser(user);
+                    alert("Account deleted successfully.");
+                }
+            } catch (err) {
+                console.error("Error deleting account:", err);
+                alert(`Failed to delete account: ${err.message}. (Note: Firebase requires a recent sign-in for security. If this occurs, try signing out and signing back in before deleting).`);
+            }
+        }
+
+
 // Safe Profile Modal Handlers
 let newProfileImageBase64 = null;
 
@@ -1343,18 +1366,57 @@ window.openEventDetailModal = function (title, date, description) {
     if (dateEl) dateEl.innerText = date;
     if (descEl) descEl.innerText = description || "No details provided for this event.";
     if (modalEl) modalEl.classList.remove('hidden');
-};
+        };
 
-// Close Event Detail Modal safely
+        // Automatically disable or enable editing inputs based on internet connection
+function handleOfflineUIChange() {
+    // Select your "Add Event" or "Add Item" button layouts 
+    const createEventBtn = document.getElementById('create-event-btn') || document.querySelector('button[type="submit"]');
+    const eventForm = document.getElementById('add-event-form') || document.querySelector('form');
+    
+    if (!navigator.onLine) {
+        console.log("App switched to offline mode. Disabling creation features...");
+        
+        // 1. Gray out and lock the submit button
+        if (createEventBtn) {
+            createEventBtn.disabled = true;
+            createEventBtn.innerText = "Unavailable Offline";
+            createEventBtn.style.opacity = "0.5";
+            createEventBtn.style.cursor = "not-allowed";
+        }
+        
+        // 2. Make form inputs unclickable
+        if (eventForm) {
+            const inputs = eventForm.querySelectorAll('input, textarea, select');
+            inputs.forEach(input => input.disabled = true);
+        }
+        
+    } else {
+        console.log("App back online. Restoring full edit capabilities.");
+        
+        // Restore standard interaction configurations
+        if (createEventBtn) {
+            createEventBtn.disabled = false;
+            createEventBtn.innerText = "Create Event";
+            createEventBtn.style.opacity = "1";
+            createEventBtn.style.cursor = "pointer";
+        }
+        if (eventForm) {
+            const inputs = eventForm.querySelectorAll('input, textarea, select');
+            inputs.forEach(input => input.disabled = false);
+        }
+    }
+}
+
+
 window.closeEventDetailModal = closeEventDetailModal;
-// Safe Event Modal Listeners
+
 const closeEventBtn = document.getElementById('close-event-modal-btn');
 if (closeEventBtn) closeEventBtn.addEventListener('click', closeEventDetailModal);
 
 const closeEventAction = document.getElementById('close-event-modal-action');
 if (closeEventAction) closeEventAction.addEventListener('click', closeEventDetailModal);
 
-// Safe Profile Modal Listeners (Guarded to prevent crashes if elements are missing)
 const profileCardBtn = document.getElementById('profile-card-btn');
 if (profileCardBtn) profileCardBtn.addEventListener('click', openProfileModal);
 
@@ -1363,6 +1425,11 @@ if (closeProfileBtn) closeProfileBtn.addEventListener('click', closeProfileModal
 
 const cancelProfileBtn = document.getElementById('cancel-profile-modal-btn');
 if (cancelProfileBtn) cancelProfileBtn.addEventListener('click', closeProfileModal);
+
+window.addEventListener('online', handleOfflineUIChange);
+window.addEventListener('offline', handleOfflineUIChange);
+
+document.addEventListener('DOMContentLoaded', handleOfflineUIChange);
 
 window.renderStorageItems = renderStorageItems;
 window.openAddItemModal = openAddItemModal;
