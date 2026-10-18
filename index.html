@@ -31,7 +31,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
     <script>
-        // Your existing Firebase Config
+        
         const firebaseConfig = {
             apiKey: "YOUR_API_KEY",
             authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
@@ -41,7 +41,7 @@
             appId: "YOUR_APP_ID"
         };
 
-        // Initialize Firebase & Firestore database
+        
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
         }
@@ -53,7 +53,7 @@
         body {
             font-family: 'Inter', sans-serif;
         }
-        /* Custom scrollbar */
+        
         ::-webkit-scrollbar {
             width: 6px;
             height: 6px;
@@ -78,7 +78,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
     <script>
-            // Your Firebase Config (Declared only once)
+            
             const firebaseConfig = {
                 apiKey: "YOUR_API_KEY",
                 authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
@@ -88,25 +88,23 @@
                 appId: "YOUR_APP_ID"
             };
 
-            // Initialize Firebase & Firestore database safely
+           
             if (!firebase.apps.length) {
                 firebase.initializeApp(firebaseConfig);
             }
             const db = firebase.firestore();
             let chatUnsubscribe = null;
 
-            // Call this function when switching to the chat tab or when user signs in
             function initChatListener() {
-                if (chatUnsubscribe) chatUnsubscribe(); // Stop previous listener if active
+                if (chatUnsubscribe) chatUnsubscribe(); 
 
                 const chatContainer = document.getElementById('chat-messages');
                 if (!chatContainer) return;
 
-                // Subscribe to Firestore real-time updates (ordered chronologically)
                 chatUnsubscribe = db.collection('messages')
                     .orderBy('timestamp', 'asc')
                     .onSnapshot((snapshot) => {
-                        chatContainer.innerHTML = ''; // Clear container
+                        chatContainer.innerHTML = ''; 
 
                         if (snapshot.empty) {
                             chatContainer.innerHTML = '<div class="text-center text-xs text-slate-500 py-8">No messages yet. Start the conversation!</div>';
@@ -117,7 +115,6 @@
                             const msg = doc.data();
                             const isMe = currentUser && msg.senderEmail === currentUser.email;
 
-                            // Render each message bubble
                             chatContainer.innerHTML += `
                                 <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'}">
                                     <div class="text-[10px] text-slate-400 mb-1 px-1">
@@ -133,14 +130,12 @@
                             `;
                         });
 
-                        // Auto scroll to bottom on new message
                         chatContainer.scrollTop = chatContainer.scrollHeight;
                     }, (error) => {
                         console.error("Chat listener error:", error);
                     });
             }
 
-            // Handle sending messages
             async function handleSendMessage(event) {
                 event.preventDefault();
                 const input = document.getElementById('chat-message-input');
@@ -204,7 +199,6 @@
 
         <!-- User Profile Header / Auth Control -->
         <div class="flex items-center space-x-3">
-            <!-- Guest State View -->
             <div id="guest-profile-container" class="flex items-center space-x-2">
                 <span class="hidden md:inline-block text-xs text-slate-400">Not signed in</span>
                 <button onclick="openAuthModal('signin')" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-slate-700 hover:bg-slate-600 text-white transition border border-slate-600/80 shadow-sm">
@@ -215,7 +209,6 @@
                 </button>
             </div>
             <div id="user-profile-container" class="hidden items-center space-x-3">
-                <!-- Removed onclick, added id="profile-card-btn" -->
                 <div id="profile-card-btn" class="flex items-center gap-3 bg-slate-900/60 border border-slate-700/80 px-3 py-1.5 rounded-full cursor-pointer hover:border-cyan-500/50 transition">
                     <div id="user-avatar" class="w-8 h-8 rounded-full bg-cyan-600 text-white font-bold flex items-center justify-center text-xs overflow-hidden">
                         <span id="user-avatar-initial">J</span>
@@ -250,7 +243,6 @@
 
         <!-- SECTION 1: SHARED CALENDAR (Split Layout) -->
         <section id="calendar-view" class="h-full flex flex-col space-y-4">
-            <!-- Calendar Header Toolbar -->
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-800/50 p-4 rounded-xl border border-slate-700/60">
                 <div class="flex items-center space-x-3">
                     <h2 id="calendar-month-year" class="text-xl font-bold text-white tracking-wide">October 2026</h2>
@@ -329,12 +321,8 @@
 
             <!-- Storage Items Table/Grid Container -->
             <div class="flex-1 bg-slate-800/40 border border-slate-700/60 rounded-xl overflow-hidden flex flex-col p-4 space-y-4">
-                <!-- Location Filters -->
                 <div class="flex items-center space-x-2 overflow-x-auto pb-2 border-b border-slate-700/60" id="location-filter-pills">
-                    <!-- Rendered via JS -->
                 </div>
-
-                <!-- Items Table -->
                 <div class="flex-1 overflow-y-auto rounded-lg border border-slate-700/60">
                     <table class="w-full text-left text-xs text-slate-300">
                         <thead>
@@ -356,31 +344,19 @@
         </section>
 
     </main>
-    <!-- 1. Calendar View Section -->
     <div id="view-calendar" class="tab-view">
-        <!-- Calendar content here -->
     </div>
-
-    <!-- 2. Storage Manager View Section -->
     <div id="view-storage" class="tab-view hidden">
-        <!-- Storage/File Table content here -->
     </div>
-
-    <!-- 3. ADD THE CHAT UI CONTAINER HERE -->
-
     <div id="auth-modal" class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center hidden p-4">
         <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-2xl relative transform transition-all">
             <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white transition">
                 <i class="fa-solid fa-xmark text-lg"></i>
             </button>
-
-            <!-- Modal Header -->
             <div class="mb-6">
                 <h3 id="auth-modal-title" class="text-xl font-bold text-white">Sign In</h3>
                 <p id="auth-modal-subtitle" class="text-xs text-slate-400 mt-1">Access your shared calendar and smart storage items</p>
             </div>
-
-            <!-- Auth Form -->
             <form id="auth-form" onsubmit="handleAuthSubmit(event)" class="space-y-4">
                 <div id="name-field-container" class="hidden">
                     <label class="block text-xs font-semibold text-slate-300 mb-1">Full Name</label>
@@ -405,8 +381,6 @@
                     Sign In
                 </button>
             </form>
-
-            <!-- Toggle Mode Link -->
             <div class="mt-4 text-center text-xs text-slate-400">
                 <span id="auth-toggle-text">Don't have an account?</span>
                 <button onclick="toggleAuthMode()" id="auth-toggle-btn" class="text-cyan-400 font-semibold hover:underline ml-1">
@@ -473,19 +447,14 @@
             <h3 class="text-lg font-bold text-white mb-4">Upload File</h3>
 
             <form onsubmit="handleCreateItem(event)" class="space-y-4">
-                <!-- File Input -->
                 <div>
                     <label class="block text-xs font-semibold text-slate-300 mb-1">Select File</label>
                     <input type="file" id="file-input" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-500 file:mr-3 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-cyan-600 file:text-white hover:file:bg-cyan-500 cursor-pointer">
                 </div>
-
-                <!-- Category Field -->
                 <div>
                     <label class="block text-xs font-semibold text-slate-300 mb-1">Category / Folder</label>
                     <input type="text" id="item-category-input" placeholder="Documents, Images, Project Files" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-500">
                 </div>
-
-                <!-- Submit Button -->
                 <button type="submit" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-semibold py-2.5 px-4 rounded-lg text-xs shadow-md transition flex items-center justify-center gap-2">
                     <i class="fa-solid fa-cloud-arrow-up"></i>
                     Upload File
@@ -505,7 +474,6 @@
             </div>
 
             <form id="profile-form" class="space-y-4">
-                <!-- Static Avatar Initial View -->
                 <div class="flex flex-col items-center justify-center space-y-2">
                     <div id="profile-modal-avatar-preview" class="w-16 h-16 rounded-full bg-cyan-600 text-white font-bold flex items-center justify-center text-xl overflow-hidden border-2 border-cyan-500/40 shadow-inner">
                         <span id="profile-modal-initial">U</span>
@@ -545,7 +513,6 @@
             </div>
 
             <form onsubmit="handleUpdateProfile(event)" class="space-y-4">
-                <!-- Avatar Preview / Upload -->
                 <div class="flex flex-col items-center justify-center space-y-2">
                     <div id="profile-modal-avatar-preview" class="w-16 h-16 rounded-full bg-cyan-600 text-white font-bold flex items-center justify-center text-xl overflow-hidden border-2 border-cyan-500/40 shadow-inner">
                         <span id="profile-modal-initial">U</span>
@@ -640,8 +607,6 @@
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'smart-hub-app';
-
-        // Updated with your actual Firebase project credentials
         const firebaseConfig = {
             apiKey: "AIzaSyBaHcWjIIoBy9e8gLeaOT_D5JkoL0Wc6EM",
             authDomain: "calendarthing-d81f9.firebaseapp.com",
@@ -659,17 +624,13 @@
                 tabManager: persistentMultipleTabManager()
             })
         });
-
-        // App State
         let currentUser = null;
-        let authMode = 'signin'; // 'signin' or 'signup'
+        let authMode = 'signin'; 
         let currentTab = 'calendar';
-        let currentDate = new Date(2026, 9, 1); // Oct 2026 default
+        let currentDate = new Date(2026, 9, 1);
         let events = [];
         let storageItems = [];
         let selectedLocation = 'All';
-
-        // UI Exposing Functions
         window.deleteCalendarEvent = deleteCalendarEvent;
         window.switchTab = switchTab;
         window.openAuthModal = openAuthModal;
@@ -687,7 +648,6 @@
         window.deleteStorageItem = deleteStorageItem;
 
 window.addEventListener('load', async () => {
-    // Authenticate initial user state
     if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
         try {
             await signInWithCustomToken(auth, __initial_auth_token);
@@ -714,238 +674,210 @@ window.addEventListener('load', async () => {
     renderCalendar();
     renderStorageItems();
 });
+        function openAuthModal(mode = 'signin') {
+            authMode = mode;
+            updateAuthModalUI();
+            document.getElementById('auth-modal').classList.remove('hidden');
+        }
 
-                                function openAuthModal(mode = 'signin') {
-                                    authMode = mode;
-                                    updateAuthModalUI();
-                                    document.getElementById('auth-modal').classList.remove('hidden');
-                                }
+        function closeAuthModal() {
+            document.getElementById('auth-modal').classList.add('hidden');
+            document.getElementById('auth-error-msg').classList.add('hidden');
+        }
 
-                                function closeAuthModal() {
-                                    document.getElementById('auth-modal').classList.add('hidden');
-                                    document.getElementById('auth-error-msg').classList.add('hidden');
-                                }
+        function toggleAuthMode() {
+            authMode = authMode === 'signin' ? 'signup' : 'signin';
+            updateAuthModalUI();
+        }
 
-                                function toggleAuthMode() {
-                                    authMode = authMode === 'signin' ? 'signup' : 'signin';
-                                    updateAuthModalUI();
-                                }
+        function updateAuthModalUI() {
+            const isSignUp = authMode === 'signup';
+            document.getElementById('auth-modal-title').innerText = isSignUp ? 'Create Account' : 'Sign In';
+            document.getElementById('auth-modal-subtitle').innerText = isSignUp ? 'Join SmartHub to collaborate on storage and calendars' : 'Welcome back! Sign in to access your dashboard';
+            document.getElementById('name-field-container').style.display = isSignUp ? 'block' : 'none';
+            document.getElementById('auth-submit-btn').innerText = isSignUp ? 'Sign Up' : 'Sign In';
+            document.getElementById('auth-toggle-text').innerText = isSignUp ? 'Already have an account?' : "Don't have an account?";
+            document.getElementById('auth-toggle-btn').innerText = isSignUp ? 'Sign In' : 'Sign Up';
+            document.getElementById('auth-error-msg').classList.add('hidden');
+        }
 
-                                function updateAuthModalUI() {
-                                    const isSignUp = authMode === 'signup';
-                                    document.getElementById('auth-modal-title').innerText = isSignUp ? 'Create Account' : 'Sign In';
-                                    document.getElementById('auth-modal-subtitle').innerText = isSignUp ? 'Join SmartHub to collaborate on storage and calendars' : 'Welcome back! Sign in to access your dashboard';
-                                    document.getElementById('name-field-container').style.display = isSignUp ? 'block' : 'none';
-                                    document.getElementById('auth-submit-btn').innerText = isSignUp ? 'Sign Up' : 'Sign In';
-                                    document.getElementById('auth-toggle-text').innerText = isSignUp ? 'Already have an account?' : "Don't have an account?";
-                                    document.getElementById('auth-toggle-btn').innerText = isSignUp ? 'Sign In' : 'Sign Up';
-                                    document.getElementById('auth-error-msg').classList.add('hidden');
-                                }
+        async function handleAuthSubmit(e) {
+            e.preventDefault();
+            const email = document.getElementById('auth-email-input').value.trim();
+            const password = document.getElementById('auth-password-input').value;
+            const errorMsg = document.getElementById('auth-error-msg');
+            errorMsg.classList.add('hidden');
 
-                            async function handleAuthSubmit(e) {
-                            e.preventDefault();
-                            const email = document.getElementById('auth-email-input').value.trim();
-                            const password = document.getElementById('auth-password-input').value;
-                            const errorMsg = document.getElementById('auth-error-msg');
-                            errorMsg.classList.add('hidden');
+            try {
+                if (authMode === 'signup') {
+                    const name = document.getElementById('auth-name-input').value.trim() || 'User';
+                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                    await updateProfile(userCredential.user, { displayName: name });
+                } else {
+                    await signInWithEmailAndPassword(auth, email, password);
+                }
+                closeAuthModal();
+            } catch (err) {
+                errorMsg.innerText = err.message || 'Authentication failed.';
+                errorMsg.classList.remove('hidden');
+            }
+        }
 
-                            try {
-                                if (authMode === 'signup') {
-                                    const name = document.getElementById('auth-name-input').value.trim() || 'User';
-                                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                                    await updateProfile(userCredential.user, { displayName: name });
-                                } else {
-                                    await signInWithEmailAndPassword(auth, email, password);
-                                }
-                                closeAuthModal();
-                            } catch (err) {
-                                errorMsg.innerText = err.message || 'Authentication failed.';
-                                errorMsg.classList.remove('hidden');
-                            }
-}
+        async function handleSignOut() {
+            try {
+                await signOut(auth);
+                await signInAnonymously(auth); 
+            } catch (e) {
+                console.error("Sign out error", e);
+            }
+        }
+        function updateUserUI() {
+            const profileContainer = document.getElementById('user-profile-container');
+            const guestContainer = document.getElementById('guest-profile-container'); 
 
-                                async function handleSignOut() {
-                                    try {
-                                        await signOut(auth);
-                                        await signInAnonymously(auth); // Fallback to anonymous guest state
-                                    } catch (e) {
-                                        console.error("Sign out error", e);
-                                    }
-                                }
+            const avatarContainer = document.getElementById('user-avatar');
+            const nameEl = document.getElementById('user-display-name');
+            const emailEl = document.getElementById('user-email-display');
 
-                    function updateUserUI() {
-                    const profileContainer = document.getElementById('user-profile-container');
-                    const guestContainer = document.getElementById('guest-profile-container'); // Matches your ID!
+            if (currentUser) {
+                if (profileContainer) {
+                    profileContainer.classList.remove('hidden');
+                    profileContainer.classList.add('flex');
+                }
+                if (guestContainer) {
+                    guestContainer.classList.add('hidden');
+                }
 
-                    const avatarContainer = document.getElementById('user-avatar');
-                    const nameEl = document.getElementById('user-display-name');
-                    const emailEl = document.getElementById('user-email-display');
+                if (nameEl) nameEl.innerText = currentUser.displayName || 'User';
+                if (emailEl) emailEl.innerText = currentUser.email || '';
 
-                    if (currentUser) {
-                        // User is logged in: Show user profile, hide guest container
-                        if (profileContainer) {
-                            profileContainer.classList.remove('hidden');
-                            profileContainer.classList.add('flex');
-                        }
-                        if (guestContainer) {
-                            guestContainer.classList.add('hidden');
-                        }
-
-                        if (nameEl) nameEl.innerText = currentUser.displayName || 'User';
-                        if (emailEl) emailEl.innerText = currentUser.email || '';
-
-                        if (avatarContainer) {
-                            if (currentUser.photoURL) {
-                                avatarContainer.innerHTML = `<img src="${currentUser.photoURL}" class="w-full h-full object-cover">`;
-                            } else {
-                                const initial = (currentUser.displayName || currentUser.email || 'U')[0].toUpperCase();
-                                avatarContainer.innerHTML = `<span id="user-avatar-initial">${initial}</span>`;
-                            }
-                        }
+                if (avatarContainer) {
+                    if (currentUser.photoURL) {
+                        avatarContainer.innerHTML = `<img src="${currentUser.photoURL}" class="w-full h-full object-cover">`;
                     } else {
-                        // User is logged out: Hide user profile, show guest container
-                        if (profileContainer) {
-                            profileContainer.classList.add('hidden');
-                            profileContainer.classList.remove('flex');
-                        }
-                        if (guestContainer) {
-                            guestContainer.classList.remove('hidden');
-                        }
+                        const initial = (currentUser.displayName || currentUser.email || 'U')[0].toUpperCase();
+                        avatarContainer.innerHTML = `<span id="user-avatar-initial">${initial}</span>`;
                     }
-}
+                }
+            } else {
+                if (profileContainer) {
+                    profileContainer.classList.add('hidden');
+                    profileContainer.classList.remove('flex');
+                }
+                if (guestContainer) {
+                    guestContainer.classList.remove('hidden');
+                }
+            }
+        }
+        function subscribeToFirestoreData() {
+            if (!currentUser) return;
+            const eventsRef = collection(db, 'calendar_events');
+            onSnapshot(eventsRef, (snapshot) => {
+                events = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderCalendar();
+            }, (err) => console.error("Firestore events snapshot error:", err));
+            const storageRef = collection(db, 'storage_items');
+            onSnapshot(storageRef, (snapshot) => {
+                storageItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderStorageItems();
+            }, (err) => console.error("Firestore storage snapshot error:", err));
+        }
 
-                                function subscribeToFirestoreData() {
-                                    if (!currentUser) return;
+        function switchTab(tabName) {
+            const cleanTab = tabName.replace('-view', '');
+            const sections = ['calendar-view', 'storage-view', 'view-chat'];
+            sections.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.classList.add('hidden');
+                    el.classList.remove('flex'); 
+                }
+            });
+            let targetId = cleanTab === 'chat' ? 'view-chat' : `${cleanTab}-view`;
+            const activeView = document.getElementById(targetId);
+            if (activeView) {
+                activeView.classList.remove('hidden');
+                if (cleanTab !== 'chat') {
+                    activeView.classList.add('flex'); 
+                }
+            }
+            const navButtons = document.querySelectorAll('nav button');
+            navButtons.forEach(btn => {
+                btn.classList.remove('bg-brand-600', 'bg-cyan-600', 'text-white', 'shadow-sm');
+                btn.classList.add('text-slate-400', 'hover:text-white');
+            });
+            const activeBtn = document.getElementById(`nav-${cleanTab}-btn`);
+            if (activeBtn) {
+                activeBtn.classList.remove('text-slate-400', 'hover:text-white');
+                activeBtn.classList.add('bg-brand-600', 'text-white', 'shadow-sm');
+            }
+            if (cleanTab === 'chat' && typeof initChatListener === 'function') {
+                initChatListener();
+            }
+        }
 
-                                    // Subscribe to Calendar Events
-                                    const eventsRef = collection(db, 'calendar_events');
-                                    onSnapshot(eventsRef, (snapshot) => {
-                                        events = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                                        renderCalendar();
-                                    }, (err) => console.error("Firestore events snapshot error:", err));
+        function navigateMonth(offset) {
+            if (offset === 0) {
+                currentDate = new Date();
+            } else {
+                currentDate.setMonth(currentDate.getMonth() + offset);
+            }
+            renderCalendar();
+        }
 
-                                    // Subscribe to Storage Items (Matching handleCreateItem path)
-                                    const storageRef = collection(db, 'storage_items');
-                                    onSnapshot(storageRef, (snapshot) => {
-                                        storageItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                                        renderStorageItems();
-                                    }, (err) => console.error("Firestore storage snapshot error:", err));
-                                }
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
 
-                                function switchTab(tabName) {
-                                    // Standardize tabName input (strip '-view' if passed)
-                                    const cleanTab = tabName.replace('-view', '');
+            const monthNames = [
+                "January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November", "December"
+            ];
 
-                                    // 1. Hide all main view sections and extra tab views
-                                    const sections = ['calendar-view', 'storage-view', 'view-chat'];
-                                    sections.forEach(id => {
-                                        const el = document.getElementById(id);
-                                        if (el) {
-                                            el.classList.add('hidden');
-                                            el.classList.remove('flex'); // Remove flex so 'hidden' works properly
-                                        }
-                                    });
+            const monthYearHeader = document.getElementById('calendar-month-year');
+            if (monthYearHeader) {
+                monthYearHeader.innerText = `${monthNames[month]} ${year}`;
+            }
 
-                                    // 2. Show the active view section
-                                    let targetId = cleanTab === 'chat' ? 'view-chat' : `${cleanTab}-view`;
-                                    const activeView = document.getElementById(targetId);
-                                    if (activeView) {
-                                        activeView.classList.remove('hidden');
-                                        if (cleanTab !== 'chat') {
-                                            activeView.classList.add('flex'); // Add flex back for section layout
-                                        }
-                                    }
+            const grid = document.getElementById('calendar-days-grid');
+            if (!grid) return;
 
-                                    // 3. Reset all nav button styles
-                                    const navButtons = document.querySelectorAll('nav button');
-                                    navButtons.forEach(btn => {
-                                        btn.classList.remove('bg-brand-600', 'bg-cyan-600', 'text-white', 'shadow-sm');
-                                        btn.classList.add('text-slate-400', 'hover:text-white');
-                                    });
+            grid.innerHTML = '';
 
-                                    // 4. Highlight the active nav button
-                                    const activeBtn = document.getElementById(`nav-${cleanTab}-btn`);
-                                    if (activeBtn) {
-                                        activeBtn.classList.remove('text-slate-400', 'hover:text-white');
-                                        activeBtn.classList.add('bg-brand-600', 'text-white', 'shadow-sm');
-                                    }
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const todayStr = new Date().toISOString().split('T')[0];
+            for (let i = 0; i < firstDay; i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.className = "bg-slate-900/30 p-1 min-h-[80px]";
+                grid.appendChild(emptyCell);
+            }
+            for (let day = 1; day <= daysInMonth; day++) {
+                const cell = document.createElement('div');
+                const formattedDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const isToday = todayStr === formattedDate;
 
-                                    // 5. Connect chat listener if switching to chat
-                                    if (cleanTab === 'chat' && typeof initChatListener === 'function') {
-                                        initChatListener();
-                                    }
-                                }
+                cell.className = `p-2 min-h-[80px] flex flex-col justify-start relative transition hover:bg-slate-800/60 ${isToday ? 'bg-cyan-950/20 border border-cyan-500/30' : 'bg-slate-900/10'
+                    }`;
+                const dayHeader = document.createElement('div');
+                dayHeader.className = "flex justify-between items-center mb-1";
+                dayHeader.innerHTML = `<span class="text-xs font-semibold ${isToday ? 'text-cyan-400 font-bold' : 'text-slate-300'}">${day}</span>`;
+                cell.appendChild(dayHeader);
+                const eventsContainer = document.createElement('div');
+                eventsContainer.className = "space-y-1 overflow-y-auto max-h-[60px]";
 
-                                function navigateMonth(offset) {
-                                    if (offset === 0) {
-                                        currentDate = new Date();
-                                    } else {
-                                        currentDate.setMonth(currentDate.getMonth() + offset);
-                                    }
-                                    renderCalendar();
-                                }
+                const dayEvents = events.filter(e => e.date === formattedDate);
+                dayEvents.forEach(evt => {
+                    const userEmail = currentUser && !currentUser.isAnonymous ? currentUser.email : null;
+                    const isOwner = userEmail && evt.createdBy === userEmail;
+                    const isAuthorizedDeleter = userEmail && evt.deleters && evt.deleters.includes(userEmail);
+                    const canDelete = isOwner || isAuthorizedDeleter;
 
-function renderCalendar() {
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
+                    const badge = document.createElement('div');
+                    badge.className = `text-[10px] px-1.5 py-0.5 rounded flex items-center justify-between gap-1 group cursor-pointer hover:opacity-90 ${isOwner ? 'bg-cyan-600 text-white' : 'bg-slate-700 text-slate-300'
+                        }`;
 
-    const monthNames = [
-        "January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December"
-    ];
-
-    const monthYearHeader = document.getElementById('calendar-month-year');
-    if (monthYearHeader) {
-        monthYearHeader.innerText = `${monthNames[month]} ${year}`;
-    }
-
-    const grid = document.getElementById('calendar-days-grid');
-    if (!grid) return;
-
-    grid.innerHTML = '';
-
-    const firstDay = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const todayStr = new Date().toISOString().split('T')[0];
-
-    // 1. Render empty leading cells for days before the 1st
-    for (let i = 0; i < firstDay; i++) {
-        const emptyCell = document.createElement('div');
-        emptyCell.className = "bg-slate-900/30 p-1 min-h-[80px]";
-        grid.appendChild(emptyCell);
-    }
-
-    // 2. Render actual day cells with numbers and event badges
-    for (let day = 1; day <= daysInMonth; day++) {
-        const cell = document.createElement('div');
-        const formattedDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        const isToday = todayStr === formattedDate;
-
-        cell.className = `p-2 min-h-[80px] flex flex-col justify-start relative transition hover:bg-slate-800/60 ${isToday ? 'bg-cyan-950/20 border border-cyan-500/30' : 'bg-slate-900/10'
-            }`;
-
-        // Header with day number
-        const dayHeader = document.createElement('div');
-        dayHeader.className = "flex justify-between items-center mb-1";
-        dayHeader.innerHTML = `<span class="text-xs font-semibold ${isToday ? 'text-cyan-400 font-bold' : 'text-slate-300'}">${day}</span>`;
-        cell.appendChild(dayHeader);
-
-        // Container for events on this day
-        const eventsContainer = document.createElement('div');
-        eventsContainer.className = "space-y-1 overflow-y-auto max-h-[60px]";
-
-        const dayEvents = events.filter(e => e.date === formattedDate);
-        dayEvents.forEach(evt => {
-            const userEmail = currentUser && !currentUser.isAnonymous ? currentUser.email : null;
-            const isOwner = userEmail && evt.createdBy === userEmail;
-            const isAuthorizedDeleter = userEmail && evt.deleters && evt.deleters.includes(userEmail);
-            const canDelete = isOwner || isAuthorizedDeleter;
-
-            const badge = document.createElement('div');
-            badge.className = `text-[10px] px-1.5 py-0.5 rounded flex items-center justify-between gap-1 group cursor-pointer hover:opacity-90 ${isOwner ? 'bg-cyan-600 text-white' : 'bg-slate-700 text-slate-300'
-                }`;
-
-            badge.innerHTML = `
+                    badge.innerHTML = `
                 <span class="truncate">${escapeHtml(evt.title)}</span>
                 ${canDelete ? `
                     <button onclick="deleteCalendarEvent('${evt.id}', event)" class="hover:text-rose-300 transition opacity-80 hover:opacity-100 p-0.5" title="Delete event">
@@ -954,41 +886,39 @@ function renderCalendar() {
                 ` : ''}
             `;
 
-            badge.addEventListener('click', () => {
-                openEventDetailModal(evt.title, evt.date, evt.description);
-            });
+                    badge.addEventListener('click', () => {
+                        openEventDetailModal(evt.title, evt.date, evt.description);
+                    });
 
-            eventsContainer.appendChild(badge);
-        });
+                    eventsContainer.appendChild(badge);
+                });
 
-        cell.appendChild(eventsContainer);
-        grid.appendChild(cell);
-    }
+                cell.appendChild(eventsContainer);
+                grid.appendChild(cell);
+            }
+            const monthlyListContainer = document.getElementById('monthly-events-list');
+            if (monthlyListContainer) {
+                monthlyListContainer.innerHTML = '';
 
-    // 3. Populate the Monthly Events Sidebar List
-    const monthlyListContainer = document.getElementById('monthly-events-list');
-    if (monthlyListContainer) {
-        monthlyListContainer.innerHTML = '';
+                const monthEvents = events.filter(evt => {
+                    if (!evt.date) return false;
+                    const [evtYear, evtMonth] = evt.date.split('-').map(Number);
+                    return evtYear === year && evtMonth === (month + 1);
+                });
 
-        const monthEvents = events.filter(evt => {
-            if (!evt.date) return false;
-            const [evtYear, evtMonth] = evt.date.split('-').map(Number);
-            return evtYear === year && evtMonth === (month + 1);
-        });
+                monthEvents.sort((a, b) => a.date.localeCompare(b.date));
 
-        monthEvents.sort((a, b) => a.date.localeCompare(b.date));
-
-        if (monthEvents.length === 0) {
-            monthlyListContainer.innerHTML = `
+                if (monthEvents.length === 0) {
+                    monthlyListContainer.innerHTML = `
                 <div class="text-center py-6 text-xs text-slate-500">
                     No events scheduled for this month.
                 </div>
             `;
-        } else {
-            monthEvents.forEach(evt => {
-                const item = document.createElement('div');
-                item.className = "bg-slate-900/60 border border-slate-700/80 hover:border-cyan-500/50 p-2.5 rounded-lg cursor-pointer transition flex flex-col gap-1";
-                item.innerHTML = `
+                } else {
+                    monthEvents.forEach(evt => {
+                        const item = document.createElement('div');
+                        item.className = "bg-slate-900/60 border border-slate-700/80 hover:border-cyan-500/50 p-2.5 rounded-lg cursor-pointer transition flex flex-col gap-1";
+                        item.innerHTML = `
                     <div class="flex items-center justify-between">
                         <span class="text-xs font-bold text-white truncate">${escapeHtml(evt.title)}</span>
                         <span class="text-[10px] text-cyan-400 font-medium">${evt.date}</span>
@@ -996,123 +926,121 @@ function renderCalendar() {
                     <p class="text-[11px] text-slate-400 truncate">${escapeHtml(evt.description || 'No description')}</p>
                 `;
 
-                item.addEventListener('click', () => {
-                    openEventDetailModal(evt.title, evt.date, evt.description);
+                        item.addEventListener('click', () => {
+                            openEventDetailModal(evt.title, evt.date, evt.description);
+                        });
+
+                        monthlyListContainer.appendChild(item);
+                    });
+                }
+            }
+        }
+
+        async function deleteCalendarEvent(id, event) {
+            if (!navigator.onLine) {
+                alert("❌ Offline Error: You cannot delete calendar events while offline. Please reconnect to the internet and try again.");
+                return;
+            }
+            if (event) event.stopPropagation();
+
+            if (!confirm("Are you sure you want to delete this event?")) return;
+
+            try {
+                await deleteDoc(doc(db, 'calendar_events', id));
+            } catch (err) {
+                console.error("Error deleting event:", err);
+                alert(`Failed to delete event: ${err.message || err}`);
+            }
+        }
+
+        function openAddEventModal() {
+            document.getElementById('event-modal').classList.remove('hidden');
+        }
+        function closeEventModal() {
+            document.getElementById('event-modal').classList.add('hidden');
+        }
+
+        async function handleCreateEvent(event) {
+            if (event && event.preventDefault) event.preventDefault();
+
+            // 🔒 OFFLINE GUARD CLAUSE
+            if (!navigator.onLine) {
+                alert("❌ Offline Error: You cannot create new calendar events while offline. Please reconnect to the internet and try again.");
+                return;
+            }
+
+            const titleInput = document.getElementById('event-title-input');
+            const dateInput = document.getElementById('event-date-input');
+            const categoryInput = document.getElementById('event-category-input');
+            const descriptionInput = document.getElementById('event-description-input');
+            const deletersInput = document.getElementById('event-deleters-input');
+
+            if (!titleInput || !titleInput.value.trim() || !dateInput || !dateInput.value) {
+                alert("Please fill in both the title and date.");
+                return;
+            }
+
+
+            const deleters = deletersInput && deletersInput.value.trim()
+                ? deletersInput.value.split(',').map(email => email.trim()).filter(Boolean)
+                : [];
+
+            try {
+                const eventsRef = collection(db, 'calendar_events');
+                await addDoc(eventsRef, {
+                    title: titleInput.value.trim(),
+                    date: dateInput.value,
+                    category: categoryInput ? categoryInput.value : 'Personal',
+                    description: descriptionInput ? descriptionInput.value.trim() : '',
+                    createdBy: (currentUser && !currentUser.isAnonymous) ? currentUser.email : 'Guest',
+                    deleters: deleters,
+                    createdAt: Date.now()
                 });
 
-                monthlyListContainer.appendChild(item);
-            });
+                closeEventModal();
+            } catch (err) {
+                console.error("Error creating calendar event:", err);
+                alert(`Failed to add event: ${err.message || err}`);
+            }
         }
-    }
-}
-async function deleteCalendarEvent(id, event) {
-    // Stop click event from propagating to parent elements
-    if (!navigator.onLine) {
-        alert("❌ Offline Error: You cannot delete calendar events while offline. Please reconnect to the internet and try again.");
-        return; // Stops the function immediately
-    }
-    if (event) event.stopPropagation();
 
-    if (!confirm("Are you sure you want to delete this event?")) return;
+        function renderStorageItems() {
+            const tbody = document.getElementById('storage-items-tbody');
+            if (!tbody) return;
 
-    try {
-        await deleteDoc(doc(db, 'calendar_events', id));
-    } catch (err) {
-        console.error("Error deleting event:", err);
-        alert(`Failed to delete event: ${err.message || err}`);
-    }
-}
+            const search = document.getElementById('storage-search-input')?.value.toLowerCase().trim() || '';
+            const categories = ['All', ...new Set(storageItems.map(i => i.category).filter(Boolean))];
+            renderCategoryPills(categories);
 
-function openAddEventModal() {
-    document.getElementById('event-modal').classList.remove('hidden');
-}
-function closeEventModal() {
-    document.getElementById('event-modal').classList.add('hidden');
-}                                
+            const filtered = storageItems.filter(item => {
+                const itemCat = item.category || 'General';
+                const matchesCategory = selectedLocation === 'All' || itemCat === selectedLocation;
+                const matchesSearch = (item.name || '').toLowerCase().includes(search) ||
+                    itemCat.toLowerCase().includes(search) ||
+                    (item.type || '').toLowerCase().includes(search) ||
+                    (item.uploadedBy || '').toLowerCase().includes(search);
 
-async function handleCreateEvent(event) {
-    if (event && event.preventDefault) event.preventDefault();
+                return matchesCategory && matchesSearch;
+            });
 
-    // 🔒 OFFLINE GUARD CLAUSE
-    if (!navigator.onLine) {
-        alert("❌ Offline Error: You cannot create new calendar events while offline. Please reconnect to the internet and try again.");
-        return; // Stops the function from running and hitting Firebase
-    }
+            tbody.innerHTML = '';
 
-    const titleInput = document.getElementById('event-title-input');
-    const dateInput = document.getElementById('event-date-input');
-    const categoryInput = document.getElementById('event-category-input');
-    const descriptionInput = document.getElementById('event-description-input');
-    const deletersInput = document.getElementById('event-deleters-input');
-
-    if (!titleInput || !titleInput.value.trim() || !dateInput || !dateInput.value) {
-        alert("Please fill in both the title and date.");
-        return;
-    }
-
-
-    const deleters = deletersInput && deletersInput.value.trim()
-        ? deletersInput.value.split(',').map(email => email.trim()).filter(Boolean)
-        : [];
-
-    try {
-        const eventsRef = collection(db, 'calendar_events');
-        await addDoc(eventsRef, {
-            title: titleInput.value.trim(),
-            date: dateInput.value,
-            category: categoryInput ? categoryInput.value : 'Personal',
-            description: descriptionInput ? descriptionInput.value.trim() : '', 
-            createdBy: (currentUser && !currentUser.isAnonymous) ? currentUser.email : 'Guest',
-            deleters: deleters,
-            createdAt: Date.now()
-        });
-
-        closeEventModal();
-    } catch (err) {
-        console.error("Error creating calendar event:", err);
-        alert(`Failed to add event: ${err.message || err}`);
-    }
-}
-
-function renderStorageItems() {
-    const tbody = document.getElementById('storage-items-tbody');
-    if (!tbody) return;
-
-    const search = document.getElementById('storage-search-input')?.value.toLowerCase().trim() || '';
-
-    // Extract unique categories for pills (replacing locations to match file metadata)
-    const categories = ['All', ...new Set(storageItems.map(i => i.category).filter(Boolean))];
-    renderCategoryPills(categories);
-
-    const filtered = storageItems.filter(item => {
-        const itemCat = item.category || 'General';
-        const matchesCategory = selectedLocation === 'All' || itemCat === selectedLocation;
-        const matchesSearch = (item.name || '').toLowerCase().includes(search) ||
-            itemCat.toLowerCase().includes(search) ||
-            (item.type || '').toLowerCase().includes(search) ||
-            (item.uploadedBy || '').toLowerCase().includes(search);
-
-        return matchesCategory && matchesSearch;
-    });
-
-    tbody.innerHTML = '';
-
-    if (filtered.length === 0) {
-        tbody.innerHTML = `
+            if (filtered.length === 0) {
+                tbody.innerHTML = `
     <tr>
         <td colspan="6" class="text-center py-8 text-xs text-slate-500">
             No storage items found matching criteria.
         </td>
     </tr>
 `;
-        return;
-    }
+                return;
+            }
 
-    filtered.forEach(item => {
-        const tr = document.createElement('tr');
-        tr.className = "hover:bg-slate-800/50 transition border-b border-slate-700/40";
+            filtered.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-800/50 transition border-b border-slate-700/40";
 
-        tr.innerHTML = `
+                tr.innerHTML = `
     <td class="px-4 py-3 font-semibold text-slate-200 flex items-center gap-2">
         <i class="fa-solid fa-file text-cyan-400"></i>
         ${escapeHtml(item.name || 'Untitled')}
@@ -1136,45 +1064,45 @@ function renderStorageItems() {
         </button>
     </td>
 `;
-        tbody.appendChild(tr);
-    });
-}
+                tbody.appendChild(tr);
+            });
+        }
 
-function renderCategoryPills(categories) {
-    const container = document.getElementById('location-filter-pills');
-    if (!container) return;
+        function renderCategoryPills(categories) {
+            const container = document.getElementById('location-filter-pills');
+            if (!container) return;
 
-    container.innerHTML = '';
+            container.innerHTML = '';
 
-    categories.forEach(cat => {
-        const btn = document.createElement('button');
-        const isActive = selectedLocation === cat;
-        btn.className = `px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition ${isActive
-                ? 'bg-cyan-600 text-white shadow-sm'
-                : 'bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-700/60'
-            }`;
-        btn.innerText = cat;
-        btn.onclick = () => {
-            selectedLocation = cat;
-            renderStorageItems();
-        };
-        container.appendChild(btn);
-    });
-}
+            categories.forEach(cat => {
+                const btn = document.createElement('button');
+                const isActive = selectedLocation === cat;
+                btn.className = `px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition ${isActive
+                    ? 'bg-cyan-600 text-white shadow-sm'
+                    : 'bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-700/60'
+                    }`;
+                btn.innerText = cat;
+                btn.onclick = () => {
+                    selectedLocation = cat;
+                    renderStorageItems();
+                };
+                container.appendChild(btn);
+            });
+        }
 
-function openAddItemModal() {
-    const modal = document.getElementById('item-modal');
-    if (modal) modal.classList.remove('hidden');
-}
+        function openAddItemModal() {
+            const modal = document.getElementById('item-modal');
+            if (modal) modal.classList.remove('hidden');
+        }
 
-function closeItemModal() {
-    const modal = document.getElementById('item-modal');
-    if (modal) {
-        modal.classList.add('hidden');
-        const form = modal.querySelector('form');
-        if (form) form.reset();
-    }
-}                                
+        function closeItemModal() {
+            const modal = document.getElementById('item-modal');
+            if (modal) {
+                modal.classList.add('hidden');
+                const form = modal.querySelector('form');
+                if (form) form.reset();
+            }
+        }      
 
         async function handleCreateItem(event) {
             event.preventDefault();
@@ -1203,7 +1131,7 @@ function closeItemModal() {
                     uploadedBy: (currentUser && !currentUser.isAnonymous) ? (currentUser.displayName || currentUser.email) : 'Guest',
                     date: today,
                     category: categoryInput ? (categoryInput.value.trim() || 'General') : 'General',
-                    dataUrl: fileDataUrl, // <-- Store file data here
+                    dataUrl: fileDataUrl, 
                     createdAt: Date.now()
                 };
 
@@ -1219,6 +1147,9 @@ function closeItemModal() {
 
             reader.readAsDataURL(file);
         }
+ 
+    
+        
 
         async function deleteStorageItem(id) {
             if (!confirm("Are you sure you want to delete this item?")) return;
@@ -1254,11 +1185,9 @@ function closeItemModal() {
             }
         }
 
+        let newProfileImageBase64 = null;
 
-// Safe Profile Modal Handlers
-let newProfileImageBase64 = null;
-
-function openProfileModal() {
+        function openProfileModal() {
             const user = auth.currentUser;
             if (!user) {
                 alert("Please sign in first!");
@@ -1283,15 +1212,15 @@ function openProfileModal() {
             newProfileImageBase64 = null;
             const modal = document.getElementById('profile-modal');
             if (modal) modal.classList.remove('hidden');
-}
+        }
 
-function closeProfileModal() {
+        function closeProfileModal() {
             const modal = document.getElementById('profile-modal');
             if (modal) modal.classList.add('hidden');
-}
+        }
 
-// Handle image file selection and conversion to Base64 preview
-document.getElementById('profile-image-input').addEventListener('change', function (event) {
+
+        document.getElementById('profile-image-input').addEventListener('change', function (event) {
             const file = event.target.files[0];
             if (!file) return;
 
@@ -1304,10 +1233,9 @@ document.getElementById('profile-image-input').addEventListener('change', functi
                 }
             };
             reader.readAsDataURL(file);
-});
+        });
 
-// Handle saving changes (Display Name only)
-document.getElementById('profile-form').addEventListener('submit', async function (e) {
+        document.getElementById('profile-form').addEventListener('submit', async function (e) {
             e.preventDefault();
             const user = auth.currentUser;
             if (!user) return;
@@ -1317,13 +1245,11 @@ document.getElementById('profile-form').addEventListener('submit', async functio
             try {
                 await updateProfile(user, { displayName: newName });
 
-                // Force Firebase to reload user state locally
                 await user.reload();
 
                 alert("Profile updated successfully!");
                 closeProfileModal();
 
-                // Refresh the header UI immediately with new data
                 if (typeof updateUserUI === 'function') {
                     updateUserUI();
                 }
@@ -1331,118 +1257,114 @@ document.getElementById('profile-form').addEventListener('submit', async functio
                 console.error("Error updating profile:", err);
                 alert(`Failed to update profile: ${err.message}`);
             }
-});
+        });
 
-window.addEventListener('load', async () => {
-                            try {
-                                if (isSignInWithEmailLink(auth, window.location.href)) {
-                                    let email = window.localStorage.getItem('emailForSignIn');
-                                    if (!email) {
-                                        email = window.prompt('Please provide your email for confirmation:');
-                                    }
-                                    if (email) {
-                                        await signInWithEmailLink(auth, email, window.location.href);
-                                        window.localStorage.removeItem('emailForSignIn');
-                                        alert("Successfully signed in via email link!");
-                                    }
-                                }
-                            } catch (err) {
-                                console.error("Error signing in with email link:", err);
-                                alert(`Sign-in link error: ${err.message}`);
-                            }
-});
-function closeEventDetailModal() {
-    const modalEl = document.getElementById('event-detail-modal');
-    if (modalEl) modalEl.classList.add('hidden');
-}
-// Open Event Detail Modal safely
-window.openEventDetailModal = function (title, date, description) {
-    const titleEl = document.getElementById('modal-event-title');
-    const dateEl = document.getElementById('modal-event-date');
-    const descEl = document.getElementById('modal-event-description');
-    const modalEl = document.getElementById('event-detail-modal');
+        window.addEventListener('load', async () => {
+            try {
+                if (isSignInWithEmailLink(auth, window.location.href)) {
+                    let email = window.localStorage.getItem('emailForSignIn');
+                    if (!email) {
+                        email = window.prompt('Please provide your email for confirmation:');
+                    }
+                    if (email) {
+                        await signInWithEmailLink(auth, email, window.location.href);
+                        window.localStorage.removeItem('emailForSignIn');
+                        alert("Successfully signed in via email link!");
+                    }
+                }
+            } catch (err) {
+                console.error("Error signing in with email link:", err);
+                alert(`Sign-in link error: ${err.message}`);
+            }
+        });
 
-    if (titleEl) titleEl.innerHTML = `<i class="fa-solid fa-calendar-day text-cyan-400"></i> ${title}`;
-    if (dateEl) dateEl.innerText = date;
-    if (descEl) descEl.innerText = description || "No details provided for this event.";
-    if (modalEl) modalEl.classList.remove('hidden');
+        function closeEventDetailModal() {
+            const modalEl = document.getElementById('event-detail-modal');
+            if (modalEl) modalEl.classList.add('hidden');
+        }
+
+        window.openEventDetailModal = function (title, date, description) {
+            const titleEl = document.getElementById('modal-event-title');
+            const dateEl = document.getElementById('modal-event-date');
+            const descEl = document.getElementById('modal-event-description');
+            const modalEl = document.getElementById('event-detail-modal');
+
+            if (titleEl) titleEl.innerHTML = `<i class="fa-solid fa-calendar-day text-cyan-400"></i> ${title}`;
+            if (dateEl) dateEl.innerText = date;
+            if (descEl) descEl.innerText = description || "No details provided for this event.";
+            if (modalEl) modalEl.classList.remove('hidden');
         };
 
-        // Automatically disable or enable editing inputs based on internet connection
-function handleOfflineUIChange() {
-    // Select your "Add Event" or "Add Item" button layouts 
-    const createEventBtn = document.getElementById('create-event-btn') || document.querySelector('button[type="submit"]');
-    const eventForm = document.getElementById('add-event-form') || document.querySelector('form');
-    
-    if (!navigator.onLine) {
-        console.log("App switched to offline mode. Disabling creation features...");
-        
-        // 1. Gray out and lock the submit button
-        if (createEventBtn) {
-            createEventBtn.disabled = true;
-            createEventBtn.innerText = "Unavailable Offline";
-            createEventBtn.style.opacity = "0.5";
-            createEventBtn.style.cursor = "not-allowed";
+        function handleOfflineUIChange() {
+
+            const createEventBtn = document.getElementById('create-event-btn') || document.querySelector('button[type="submit"]');
+            const eventForm = document.getElementById('add-event-form') || document.querySelector('form');
+
+            if (!navigator.onLine) {
+                console.log("App switched to offline mode. Disabling creation features...");
+
+                if (createEventBtn) {
+                    createEventBtn.disabled = true;
+                    createEventBtn.innerText = "Unavailable Offline";
+                    createEventBtn.style.opacity = "0.5";
+                    createEventBtn.style.cursor = "not-allowed";
+                }
+
+                if (eventForm) {
+                    const inputs = eventForm.querySelectorAll('input, textarea, select');
+                    inputs.forEach(input => input.disabled = true);
+                }
+
+            } else {
+                console.log("App back online. Restoring full edit capabilities.");
+                if (createEventBtn) {
+                    createEventBtn.disabled = false;
+                    createEventBtn.innerText = "Create Event";
+                    createEventBtn.style.opacity = "1";
+                    createEventBtn.style.cursor = "pointer";
+                }
+                if (eventForm) {
+                    const inputs = eventForm.querySelectorAll('input, textarea, select');
+                    inputs.forEach(input => input.disabled = false);
+                }
+            }
         }
-        
-        // 2. Make form inputs unclickable
-        if (eventForm) {
-            const inputs = eventForm.querySelectorAll('input, textarea, select');
-            inputs.forEach(input => input.disabled = true);
-        }
-        
-    } else {
-        console.log("App back online. Restoring full edit capabilities.");
-        
-        // Restore standard interaction configurations
-        if (createEventBtn) {
-            createEventBtn.disabled = false;
-            createEventBtn.innerText = "Create Event";
-            createEventBtn.style.opacity = "1";
-            createEventBtn.style.cursor = "pointer";
-        }
-        if (eventForm) {
-            const inputs = eventForm.querySelectorAll('input, textarea, select');
-            inputs.forEach(input => input.disabled = false);
-        }
-    }
-}
 
+        window.closeEventDetailModal = closeEventDetailModal;
 
-window.closeEventDetailModal = closeEventDetailModal;
+        const closeEventBtn = document.getElementById('close-event-modal-btn');
+        if (closeEventBtn) closeEventBtn.addEventListener('click', closeEventDetailModal);
 
-const closeEventBtn = document.getElementById('close-event-modal-btn');
-if (closeEventBtn) closeEventBtn.addEventListener('click', closeEventDetailModal);
+        const closeEventAction = document.getElementById('close-event-modal-action');
+        if (closeEventAction) closeEventAction.addEventListener('click', closeEventDetailModal);
 
-const closeEventAction = document.getElementById('close-event-modal-action');
-if (closeEventAction) closeEventAction.addEventListener('click', closeEventDetailModal);
+        const profileCardBtn = document.getElementById('profile-card-btn');
+        if (profileCardBtn) profileCardBtn.addEventListener('click', openProfileModal);
 
-const profileCardBtn = document.getElementById('profile-card-btn');
-if (profileCardBtn) profileCardBtn.addEventListener('click', openProfileModal);
+        const closeProfileBtn = document.getElementById('close-profile-modal-btn');
+        if (closeProfileBtn) closeProfileBtn.addEventListener('click', closeProfileModal);
 
-const closeProfileBtn = document.getElementById('close-profile-modal-btn');
-if (closeProfileBtn) closeProfileBtn.addEventListener('click', closeProfileModal);
+        const cancelProfileBtn = document.getElementById('cancel-profile-modal-btn');
+        if (cancelProfileBtn) cancelProfileBtn.addEventListener('click', closeProfileModal);
 
-const cancelProfileBtn = document.getElementById('cancel-profile-modal-btn');
-if (cancelProfileBtn) cancelProfileBtn.addEventListener('click', closeProfileModal);
+        window.addEventListener('online', handleOfflineUIChange);
+        window.addEventListener('offline', handleOfflineUIChange);
 
-window.addEventListener('online', handleOfflineUIChange);
-window.addEventListener('offline', handleOfflineUIChange);
+        document.addEventListener('DOMContentLoaded', handleOfflineUIChange);
 
-document.addEventListener('DOMContentLoaded', handleOfflineUIChange);
+        window.renderStorageItems = renderStorageItems;
+        window.openAddItemModal = openAddItemModal;
+        window.closeItemModal = closeItemModal;
+        window.handleCreateItem = handleCreateItem;
+        window.deleteStorageItem = deleteStorageItem;
+        window.handleDeleteAccount = handleDeleteAccount;
+        window.handleSendEmailLink = handleSendEmailLink;
+        window.handleAuthSubmit = handleAuthSubmit;
+        window.openProfileModal = openProfileModal;
+        window.closeProfileModal = closeProfileModal;
+        window.previewProfileImage = previewProfileImage;
+        window.handleUpdateProfile = handleUpdateProfile;
 
-window.renderStorageItems = renderStorageItems;
-window.openAddItemModal = openAddItemModal;
-window.closeItemModal = closeItemModal;
-window.handleCreateItem = handleCreateItem;
-window.deleteStorageItem = deleteStorageItem;
-window.handleDeleteAccount = handleDeleteAccount;
-window.handleSendEmailLink = handleSendEmailLink;
-window.handleAuthSubmit = handleAuthSubmit;
-window.openProfileModal = openProfileModal;
-window.closeProfileModal = closeProfileModal;
-window.previewProfileImage = previewProfileImage;
-window.handleUpdateProfile = handleUpdateProfile;
     </script>
 </body>
 </html>
